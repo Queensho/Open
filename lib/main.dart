@@ -23,10 +23,7 @@ class OpenApp extends StatelessWidget {
             foregroundColor: ink,
             minimumSize: const Size.fromHeight(58),
             shape: const StadiumBorder(),
-            textStyle: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
+            textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
           ),
         ),
       ),
@@ -35,17 +32,10 @@ class OpenApp extends StatelessWidget {
   }
 }
 
-class AssetStyleIcon extends StatelessWidget {
-  final IconData icon;
+class AssetPng extends StatelessWidget {
+  const AssetPng(this.path, {super.key, this.size = 126});
+  final String path;
   final double size;
-  final bool solid;
-
-  const AssetStyleIcon(
-    this.icon, {
-    super.key,
-    this.size = 112,
-    this.solid = false,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,34 +43,30 @@ class AssetStyleIcon extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: solid ? OpenApp.lime : Colors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(size * .28),
         boxShadow: [
           BoxShadow(
-            color: OpenApp.lime.withValues(alpha: .28),
-            blurRadius: 32,
-            spreadRadius: 5,
+            color: OpenApp.lime.withValues(alpha: .25),
+            blurRadius: 36,
+            spreadRadius: 4,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: .07),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: .06),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
           ),
         ],
       ),
-      child: Icon(
-        icon,
-        size: size * .56,
-        color: solid ? OpenApp.ink : OpenApp.lime,
-      ),
+      padding: EdgeInsets.all(size * .12),
+      child: Image.asset(path, fit: BoxFit.contain, filterQuality: FilterQuality.high),
     );
   }
 }
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -91,10 +77,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Future.delayed(const Duration(milliseconds: 1400), () {
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()));
       }
     });
   }
@@ -106,25 +89,11 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AssetStyleIcon(Icons.lock_open_rounded, size: 112),
+            const AssetPng('assets/icons/splash_logo.png', size: 118),
             const SizedBox(height: 28),
-            const Text(
-              'Open',
-              style: TextStyle(
-                fontSize: 44,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -1.8,
-              ),
-            ),
+            const Text('Open', style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: -1.8)),
             const SizedBox(height: 9),
-            Container(
-              width: 34,
-              height: 5,
-              decoration: BoxDecoration(
-                color: OpenApp.lime,
-                borderRadius: BorderRadius.circular(9),
-              ),
-            ),
+            Container(width: 34, height: 5, decoration: BoxDecoration(color: OpenApp.lime, borderRadius: BorderRadius.circular(9))),
           ],
         ),
       ),
@@ -134,7 +103,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,51 +113,18 @@ class WelcomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Spacer(flex: 2),
-              const AssetStyleIcon(Icons.lock_open_rounded, size: 88),
+              const AssetPng('assets/icons/splash_logo.png', size: 90),
               const SizedBox(height: 30),
-              const Text(
-                'Open',
-                style: TextStyle(
-                  fontSize: 52,
-                  height: 1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -2,
-                ),
-              ),
+              const Text('Open', style: TextStyle(fontSize: 52, height: 1, fontWeight: FontWeight.w900, letterSpacing: -2)),
               const SizedBox(height: 22),
-              const Text(
-                'Kaydırma.\nÖnce kilidimi aç.',
-                style: TextStyle(
-                  fontSize: 31,
-                  height: 1.08,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -.7,
-                ),
-              ),
+              const Text('Kaydırma.\nÖnce kilidimi aç.', style: TextStyle(fontSize: 31, height: 1.08, fontWeight: FontWeight.w800, letterSpacing: -.7)),
               const SizedBox(height: 18),
-              Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: OpenApp.lime,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+              Container(width: 44, height: 4, decoration: BoxDecoration(color: OpenApp.lime, borderRadius: BorderRadius.circular(8))),
               const SizedBox(height: 16),
-              const Text(
-                'Bir fotoğraftan fazlasını keşfet.\nSoruyu cevapla, profili aç ve gerçek bir bağ kur.',
-                style: TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                  color: Color(0xFF6B6B6B),
-                ),
-              ),
+              const Text('Bir fotoğraftan fazlasını keşfet.\nSoruyu cevapla, profili aç ve gerçek bir bağ kur.', style: TextStyle(fontSize: 16, height: 1.5, color: Color(0xFF6B6B6B))),
               const Spacer(flex: 3),
               FilledButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-                ),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OnboardingScreen())),
                 child: const Text('Başlayalım'),
               ),
             ],
@@ -202,7 +137,6 @@ class WelcomeScreen extends StatelessWidget {
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
-
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
@@ -212,43 +146,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int page = 0;
 
   final pages = const [
-    (
-      'Profil değil,\ninsanı keşfet.',
-      'Önce soruları cevapla, sonra karar ver.',
-      Icons.lock_rounded,
-      false,
-    ),
-    (
-      '3 kilit soru,\nyüzlerce olasılık.',
-      'Merak uyandıran sorularla daha anlamlı sohbetler.',
-      Icons.question_mark_rounded,
-      true,
-    ),
-    (
-      'Doğru kişiyle\nanahtarın uyusun.',
-      'Anahtarını gönder. Kabul edilirse profil açılır ve sohbet başlar.',
-      Icons.key_rounded,
-      true,
-    ),
-    (
-      'Gerçek bağlantılar\nburada başlar.',
-      'Daha az yüzeysel, daha çok sen.',
-      Icons.lock_open_rounded,
-      false,
-    ),
+    ('Profil değil,\ninsanı keşfet.', 'Önce soruları cevapla, sonra karar ver.', 'assets/icons/icon_lock.png'),
+    ('3 kilit soru,\nyüzlerce olasılık.', 'Merak uyandıran sorularla daha anlamlı sohbetler.', 'assets/icons/icon_question.png'),
+    ('Doğru kişiyle\nanahtarın uyusun.', 'Anahtarını gönder. Kabul edilirse profil açılır ve sohbet başlar.', 'assets/icons/icon_key.png'),
+    ('Gerçek bağlantılar\nburada başlar.', 'Daha az yüzeysel, daha çok sen.', 'assets/icons/icon_unlock.png'),
   ];
 
   void next() {
     if (page < pages.length - 1) {
-      controller.nextPage(
-        duration: const Duration(milliseconds: 330),
-        curve: Curves.easeOutCubic,
-      );
+      controller.nextPage(duration: const Duration(milliseconds: 330), curve: Curves.easeOutCubic);
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
   }
 
@@ -263,17 +171,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(right: 20, top: 6),
                 child: TextButton(
-                  onPressed: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  ),
-                  child: const Text(
-                    'Atla',
-                    style: TextStyle(
-                      color: OpenApp.ink,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                  onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
+                  child: const Text('Atla', style: TextStyle(color: OpenApp.ink, fontWeight: FontWeight.w800)),
                 ),
               ),
             ),
@@ -296,60 +195,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               height: 230,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    OpenApp.lime.withValues(alpha: .20),
-                                    OpenApp.lime.withValues(alpha: .035),
-                                    Colors.transparent,
-                                  ],
-                                ),
+                                gradient: RadialGradient(colors: [OpenApp.lime.withValues(alpha: .20), OpenApp.lime.withValues(alpha: .035), Colors.transparent]),
                               ),
-                              child: Center(
-                                child: AssetStyleIcon(
-                                  p.$3,
-                                  size: 126,
-                                  solid: p.$4,
-                                ),
-                              ),
+                              child: Center(child: AssetPng(p.$3, size: 132)),
                             ),
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: OpenApp.lime,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Text(
-                            '0${i + 1}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                            ),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(color: OpenApp.lime, borderRadius: BorderRadius.circular(18)),
+                          child: Text('0${i + 1}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                         ),
                         const SizedBox(height: 18),
-                        Text(
-                          p.$1,
-                          style: const TextStyle(
-                            fontSize: 34,
-                            height: 1.06,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1,
-                          ),
-                        ),
+                        Text(p.$1, style: const TextStyle(fontSize: 34, height: 1.06, fontWeight: FontWeight.w900, letterSpacing: -1)),
                         const SizedBox(height: 15),
-                        Text(
-                          p.$2,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            height: 1.45,
-                            color: Color(0xFF6B6B6B),
-                          ),
-                        ),
+                        Text(p.$2, style: const TextStyle(fontSize: 16, height: 1.45, color: Color(0xFF6B6B6B))),
                         const SizedBox(height: 26),
                         Row(
                           children: List.generate(
@@ -359,22 +219,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               margin: const EdgeInsets.only(right: 8),
                               width: d == page ? 28 : 9,
                               height: 9,
-                              decoration: BoxDecoration(
-                                color: d == page
-                                    ? OpenApp.lime
-                                    : const Color(0xFFE0E0E0),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                              decoration: BoxDecoration(color: d == page ? OpenApp.lime : const Color(0xFFE0E0E0), borderRadius: BorderRadius.circular(10)),
                             ),
                           ),
                         ),
                         const SizedBox(height: 25),
-                        FilledButton(
-                          onPressed: next,
-                          child: Text(
-                            i == pages.length - 1 ? 'Open’a gir' : 'Devam et',
-                          ),
-                        ),
+                        FilledButton(onPressed: next, child: Text(i == pages.length - 1 ? 'Open’a gir' : 'Devam et')),
                       ],
                     ),
                   );
@@ -390,7 +240,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -401,37 +250,16 @@ class LoginScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Spacer(),
-              const AssetStyleIcon(Icons.lock_open_rounded, size: 82),
+              const AssetPng('assets/icons/splash_logo.png', size: 82),
               const SizedBox(height: 26),
-              const Text(
-                'Open',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -2,
-                ),
-              ),
+              const Text('Open', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900, letterSpacing: -2)),
               const SizedBox(height: 12),
-              const Text(
-                'Gerçek bağlantılar burada başlar.',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFF666666),
-                ),
-              ),
+              const Text('Gerçek bağlantılar burada başlar.', style: TextStyle(fontSize: 18, color: Color(0xFF666666))),
               const Spacer(),
-              FilledButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.phone_rounded),
-                label: const Text('Telefon ile devam et'),
-              ),
+              FilledButton.icon(onPressed: () {}, icon: const Icon(Icons.phone_rounded), label: const Text('Telefon ile devam et')),
               const SizedBox(height: 12),
               OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(58),
-                  shape: const StadiumBorder(),
-                  foregroundColor: OpenApp.ink,
-                ),
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(58), shape: const StadiumBorder(), foregroundColor: OpenApp.ink),
                 onPressed: () {},
                 icon: const Icon(Icons.mail_outline_rounded),
                 label: const Text('E-posta ile devam et'),
