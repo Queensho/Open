@@ -33,9 +33,10 @@ class OpenApp extends StatelessWidget {
 }
 
 class AssetPng extends StatelessWidget {
-  const AssetPng(this.path, {super.key, this.size = 126});
+  const AssetPng(this.path, {super.key, this.size = 126, this.scale = 1.85});
   final String path;
   final double size;
+  final double scale;
 
   @override
   Widget build(BuildContext context) {
@@ -47,20 +48,36 @@ class AssetPng extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * .28),
         boxShadow: [
           BoxShadow(
-            color: OpenApp.lime.withValues(alpha: .25),
-            blurRadius: 36,
-            spreadRadius: 4,
+            color: OpenApp.lime.withValues(alpha: .22),
+            blurRadius: 34,
+            spreadRadius: 5,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: .06),
-            blurRadius: 14,
-            offset: const Offset(0, 7),
+            color: Colors.black.withValues(alpha: .05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      padding: EdgeInsets.all(size * .12),
-      child: Image.asset(path, fit: BoxFit.contain, filterQuality: FilterQuality.high),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size * .28),
+        child: Center(
+          child: Transform.scale(
+            scale: scale,
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: Image.asset(
+                path,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+                isAntiAlias: true,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -89,7 +106,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AssetPng('assets/icons/splash_logo.png', size: 118),
+            const AssetPng('assets/icons/splash_logo.png', size: 118, scale: 1.65),
             const SizedBox(height: 28),
             const Text('Open', style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: -1.8)),
             const SizedBox(height: 9),
@@ -113,7 +130,7 @@ class WelcomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Spacer(flex: 2),
-              const AssetPng('assets/icons/splash_logo.png', size: 90),
+              const AssetPng('assets/icons/splash_logo.png', size: 90, scale: 1.65),
               const SizedBox(height: 30),
               const Text('Open', style: TextStyle(fontSize: 52, height: 1, fontWeight: FontWeight.w900, letterSpacing: -2)),
               const SizedBox(height: 22),
@@ -195,9 +212,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               height: 230,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: RadialGradient(colors: [OpenApp.lime.withValues(alpha: .20), OpenApp.lime.withValues(alpha: .035), Colors.transparent]),
+                                gradient: RadialGradient(colors: [OpenApp.lime.withValues(alpha: .17), OpenApp.lime.withValues(alpha: .025), Colors.transparent]),
                               ),
-                              child: Center(child: AssetPng(p.$3, size: 132)),
+                              child: Center(child: AssetPng(p.$3, size: 146, scale: 1.95)),
                             ),
                           ),
                         ),
@@ -250,7 +267,7 @@ class LoginScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Spacer(),
-              const AssetPng('assets/icons/splash_logo.png', size: 82),
+              const AssetPng('assets/icons/splash_logo.png', size: 82, scale: 1.65),
               const SizedBox(height: 26),
               const Text('Open', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900, letterSpacing: -2)),
               const SizedBox(height: 12),
