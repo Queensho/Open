@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 void main() => runApp(const OpenApp());
 
@@ -41,49 +40,87 @@ class OpenApp extends StatelessWidget {
       );
 }
 
-class AssetSvg extends StatelessWidget {
-  const AssetSvg(this.path, {super.key, this.size = 126, this.card = true});
-  final String path;
+class AppIcon extends StatelessWidget {
+  const AppIcon(this.index, {super.key, this.size = 64, this.card = false});
+  final int index;
   final double size;
   final bool card;
+
   @override
   Widget build(BuildContext context) {
-    final image = Padding(
-      padding: EdgeInsets.all(size * .08),
-      child: SvgPicture.asset(path, fit: BoxFit.contain),
+    final col = index % 4;
+    final row = index ~/ 4;
+    final icon = SizedBox(
+      width: size,
+      height: size,
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: size * 4,
+          maxWidth: size * 4,
+          minHeight: size * 5,
+          maxHeight: size * 5,
+          child: Transform.translate(
+            offset: Offset(-col * size, -row * size),
+            child: Image.asset(
+              'assets/icons_pack/preview_sprite.png',
+              width: size * 4,
+              height: size * 5,
+              fit: BoxFit.fill,
+              filterQuality: FilterQuality.high,
+            ),
+          ),
+        ),
+      ),
     );
-    if (!card) return SizedBox(width: size, height: size, child: image);
+    if (!card) return icon;
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(size * .28),
-        boxShadow: [BoxShadow(color: OpenApp.lime.withValues(alpha: .20), blurRadius: 34, spreadRadius: 4, offset: const Offset(0, 8))],
+        boxShadow: [BoxShadow(color: OpenApp.lime.withValues(alpha: .18), blurRadius: 30, spreadRadius: 3, offset: const Offset(0, 8))],
       ),
-      child: image,
+      child: icon,
     );
   }
 }
 
-class MiniSvg extends StatelessWidget {
-  const MiniSvg(this.path, {super.key, this.size = 24, this.color = OpenApp.ink});
-  final String path;
-  final double size;
-  final Color color;
-  @override
-  Widget build(BuildContext context) => SvgPicture.asset(path, width: size, height: size, colorFilter: ColorFilter.mode(color, BlendMode.srcIn));
+class IconsPack {
+  static const splash = 0;
+  static const lock = 1;
+  static const question = 2;
+  static const key = 3;
+  static const unlock = 4;
+  static const phone = 5;
+  static const mail = 6;
+  static const camera = 7;
+  static const navHome = 8;
+  static const navHomeActive = 9;
+  static const navKey = 10;
+  static const navKeyActive = 11;
+  static const navMessages = 12;
+  static const navMessagesActive = 13;
+  static const navProfile = 14;
+  static const navProfileActive = 15;
+  static const profile = 16;
+  static const send = 17;
 }
 
 class PageTitle extends StatelessWidget {
   const PageTitle(this.title, this.subtitle, {super.key});
-  final String title, subtitle;
+  final String title;
+  final String subtitle;
   @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: const TextStyle(fontSize: 34, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.1)),
-        const SizedBox(height: 10),
-        Text(subtitle, style: const TextStyle(fontSize: 15.5, height: 1.45, color: OpenApp.muted)),
-      ]);
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 34, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.1)),
+          const SizedBox(height: 10),
+          Text(subtitle, style: const TextStyle(fontSize: 15.5, height: 1.45, color: OpenApp.muted)),
+        ],
+      );
 }
 
 class SplashScreen extends StatefulWidget {
@@ -100,11 +137,12 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()));
     });
   }
+
   @override
   Widget build(BuildContext context) => const Scaffold(
         body: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            AssetSvg('assets/icons_pack/gradient/splash_logo.svg', size: 118),
+            AppIcon(IconsPack.splash, size: 118, card: true),
             SizedBox(height: 26),
             Text('Open', style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900)),
           ]),
@@ -121,7 +159,7 @@ class WelcomeScreen extends StatelessWidget {
             padding: const EdgeInsets.all(28),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Spacer(),
-              const AssetSvg('assets/icons_pack/gradient/splash_logo.svg', size: 90),
+              const AppIcon(IconsPack.splash, size: 90, card: true),
               const SizedBox(height: 28),
               const Text('Open', style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900)),
               const SizedBox(height: 18),
@@ -144,10 +182,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final c = PageController();
   int page = 0;
   final pages = const [
-    ('Profil değil,\ninsanı keşfet.', 'Önce soruları cevapla, sonra karar ver.', 'assets/icons_pack/gradient/icon_lock.svg'),
-    ('3 kilit soru,\nyüzlerce olasılık.', 'Merak uyandıran sorularla daha anlamlı sohbetler.', 'assets/icons_pack/line/icon_question.svg'),
-    ('Doğru kişiyle\nanahtarın uyusun.', 'Anahtarını gönder. Kabul edilirse profil açılır.', 'assets/icons_pack/gradient/icon_key.svg'),
-    ('Gerçek bağlantılar\nburada başlar.', 'Daha az yüzeysel, daha çok sen.', 'assets/icons_pack/gradient/icon_unlock.svg'),
+    ('Profil değil,\ninsanı keşfet.', 'Önce soruları cevapla, sonra karar ver.', IconsPack.lock),
+    ('3 kilit soru,\nyüzlerce olasılık.', 'Merak uyandıran sorularla daha anlamlı sohbetler.', IconsPack.question),
+    ('Doğru kişiyle\nanahtarın uyusun.', 'Anahtarını gönder. Kabul edilirse profil açılır.', IconsPack.key),
+    ('Gerçek bağlantılar\nburada başlar.', 'Daha az yüzeysel, daha çok sen.', IconsPack.unlock),
   ];
 
   void next() {
@@ -173,8 +211,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   return Padding(
                     padding: const EdgeInsets.all(28),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Expanded(child: Center(child: AssetSvg(p.$3, size: 150))),
-                      Text('0${i + 1}', style: const TextStyle(fontWeight: FontWeight.w900, backgroundColor: OpenApp.lime)),
+                      Expanded(child: Center(child: AppIcon(p.$3, size: 150, card: true))),
+                      Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: OpenApp.lime, borderRadius: BorderRadius.circular(18)), child: Text('0${i + 1}', style: const TextStyle(fontWeight: FontWeight.w900))),
                       const SizedBox(height: 18),
                       Text(p.$1, style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
                       const SizedBox(height: 12),
@@ -200,7 +238,7 @@ class LoginScreen extends StatelessWidget {
             padding: const EdgeInsets.all(28),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Spacer(),
-              const AssetSvg('assets/icons_pack/gradient/splash_logo.svg', size: 82),
+              const AppIcon(IconsPack.splash, size: 82, card: true),
               const SizedBox(height: 26),
               const Text('Open', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900)),
               const SizedBox(height: 12),
@@ -208,13 +246,13 @@ class LoginScreen extends StatelessWidget {
               const Spacer(),
               FilledButton(
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PhoneLoginScreen())),
-                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [MiniSvg('assets/icons_pack/line/icon_phone.svg', size: 22), SizedBox(width: 10), Text('Telefon ile devam et')]),
+                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [AppIcon(IconsPack.phone, size: 24), SizedBox(width: 10), Text('Telefon ile devam et')]),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(58), shape: const StadiumBorder()),
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [MiniSvg('assets/icons_pack/line/icon_mail.svg', size: 22), SizedBox(width: 10), Text('E-posta ile devam et')]),
+                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [AppIcon(IconsPack.mail, size: 24), SizedBox(width: 10), Text('E-posta ile devam et')]),
               ),
               const SizedBox(height: 24),
             ]),
@@ -232,7 +270,6 @@ class PhoneLoginScreen extends StatefulWidget {
 class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   final phone = TextEditingController();
   String? error;
-
   void sendCode() {
     final digits = phone.text.replaceAll(RegExp(r'\D'), '');
     if (digits.length < 10) {
@@ -249,22 +286,11 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(26, 12, 26, 28),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const AssetSvg('assets/icons_pack/gradient/icon_phone.svg', size: 76),
+              const AppIcon(IconsPack.phone, size: 76, card: true),
               const SizedBox(height: 26),
               const PageTitle('Telefon numaranı gir.', 'Sana 6 haneli bir doğrulama kodu göndereceğiz.'),
               const SizedBox(height: 28),
-              TextField(
-                controller: phone,
-                keyboardType: TextInputType.phone,
-                autofocus: true,
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]'))],
-                decoration: InputDecoration(
-                  prefixText: '+90  ',
-                  labelText: 'Telefon numarası',
-                  hintText: '5XX XXX XX XX',
-                  errorText: error,
-                ),
-              ),
+              TextField(controller: phone, keyboardType: TextInputType.phone, autofocus: true, inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]'))], decoration: InputDecoration(prefixText: '+90  ', labelText: 'Telefon numarası', hintText: '5XX XXX XX XX', errorText: error)),
               const SizedBox(height: 12),
               const Text('Şimdilik test doğrulama kodu: 123456', style: TextStyle(color: OpenApp.muted, fontSize: 13)),
               const Spacer(),
@@ -285,7 +311,6 @@ class OtpScreen extends StatefulWidget {
 class _OtpScreenState extends State<OtpScreen> {
   final code = TextEditingController();
   String? error;
-
   void verify() {
     if (code.text.trim() != '123456') {
       setState(() => error = 'Kod hatalı. Test kodu: 123456');
@@ -301,21 +326,11 @@ class _OtpScreenState extends State<OtpScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(26, 12, 26, 28),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const AssetSvg('assets/icons_pack/gradient/icon_unlock.svg', size: 76),
+              const AppIcon(IconsPack.unlock, size: 76, card: true),
               const SizedBox(height: 26),
               PageTitle('Onay kodunu gir.', '+90 ${widget.phone} numarasına gönderilen 6 haneli kodu yaz.'),
               const SizedBox(height: 28),
-              TextField(
-                controller: code,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                maxLength: 6,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 10),
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
-                decoration: InputDecoration(counterText: '', hintText: '••••••', errorText: error),
-                onSubmitted: (_) => verify(),
-              ),
+              TextField(controller: code, keyboardType: TextInputType.number, autofocus: true, maxLength: 6, textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 10), inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)], decoration: InputDecoration(counterText: '', hintText: '••••••', errorText: error), onSubmitted: (_) => verify()),
               const SizedBox(height: 14),
               Center(child: TextButton(onPressed: () => setState(() => error = null), child: const Text('Kodu tekrar gönder'))),
               const Spacer(),
@@ -334,7 +349,7 @@ class RegisterScreen extends StatelessWidget {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(26),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const AssetSvg('assets/icons_pack/gradient/icon_unlock.svg', size: 72),
+              const AppIcon(IconsPack.unlock, size: 72, card: true),
               const SizedBox(height: 24),
               const PageTitle('Hesabını aç.', 'E-posta ile kayıt bilgilerini gir, sonra profilini oluştur.'),
               const SizedBox(height: 24),
@@ -361,7 +376,7 @@ class CreateProfileScreen extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const PageTitle('Profilini oluştur.', 'Fotoğrafını ve 3 kilit sorunu ekle.'),
               const SizedBox(height: 24),
-              Container(height: 160, decoration: BoxDecoration(color: OpenApp.soft, borderRadius: BorderRadius.circular(28)), child: const Center(child: Text('＋ Fotoğraf ekle', style: TextStyle(fontWeight: FontWeight.w800)))),
+              Container(height: 160, decoration: BoxDecoration(color: OpenApp.soft, borderRadius: BorderRadius.circular(28)), child: const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [AppIcon(IconsPack.camera, size: 50), SizedBox(height: 8), Text('Fotoğraf ekle', style: TextStyle(fontWeight: FontWeight.w800))]))),
               const SizedBox(height: 14),
               const TextField(decoration: InputDecoration(labelText: 'Adın')),
               const SizedBox(height: 14),
@@ -386,7 +401,6 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int i = 0;
   final screens = const [DiscoverScreen(), KeysScreen(), MessagesScreen(), MyProfileScreen()];
-  Widget navIcon(String path, int index) => MiniSvg(path, size: 24, color: i == index ? OpenApp.ink : const Color(0xFF777777));
   @override
   Widget build(BuildContext context) => Scaffold(
         body: screens[i],
@@ -395,10 +409,10 @@ class _AppShellState extends State<AppShell> {
           indicatorColor: OpenApp.lime,
           onDestinationSelected: (v) => setState(() => i = v),
           destinations: [
-            NavigationDestination(icon: navIcon('assets/icons_pack/nav/nav_home.svg', 0), label: 'Keşfet'),
-            NavigationDestination(icon: navIcon('assets/icons_pack/nav/nav_key.svg', 1), label: 'Anahtarlar'),
-            NavigationDestination(icon: navIcon('assets/icons_pack/nav/nav_messages.svg', 2), label: 'Mesajlar'),
-            NavigationDestination(icon: navIcon('assets/icons_pack/nav/nav_profile.svg', 3), label: 'Profil'),
+            NavigationDestination(icon: AppIcon(i == 0 ? IconsPack.navHomeActive : IconsPack.navHome, size: 26), label: 'Keşfet'),
+            NavigationDestination(icon: AppIcon(i == 1 ? IconsPack.navKeyActive : IconsPack.navKey, size: 26), label: 'Anahtarlar'),
+            NavigationDestination(icon: AppIcon(i == 2 ? IconsPack.navMessagesActive : IconsPack.navMessages, size: 26), label: 'Mesajlar'),
+            NavigationDestination(icon: AppIcon(i == 3 ? IconsPack.navProfileActive : IconsPack.navProfile, size: 26), label: 'Profil'),
           ],
         ),
       );
@@ -414,7 +428,7 @@ class DiscoverScreen extends StatelessWidget {
             const PageTitle('Keşfet', 'Fotoğraf kilitli. Önce soruyu cevapla.'),
             const Spacer(),
             Center(child: Column(children: [
-              const AssetSvg('assets/icons_pack/gradient/icon_lock.svg', size: 150),
+              const AppIcon(IconsPack.lock, size: 150, card: true),
               const SizedBox(height: 18),
               const Text('Deniz, 27', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
               const SizedBox(height: 8),
@@ -454,7 +468,7 @@ class KeySentScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(28),
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const AssetSvg('assets/icons_pack/gradient/icon_key.svg', size: 150),
+              const AppIcon(IconsPack.key, size: 150, card: true),
               const SizedBox(height: 24),
               const Text('Anahtar gönderildi!', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
               const SizedBox(height: 12),
@@ -476,12 +490,7 @@ class KeysScreen extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const PageTitle('Anahtarlar', 'Sana gelen cevaplar burada.'),
             const SizedBox(height: 28),
-            Card(child: ListTile(
-              leading: const AssetSvg('assets/icons_pack/gradient/icon_key.svg', size: 46, card: false),
-              title: const Text('Ece sana bir anahtar gönderdi'),
-              subtitle: const Text('“Kahve, sahil ve uzun bir yürüyüş.”'),
-              trailing: FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchScreen())), child: const Text('Aç')),
-            )),
+            Card(child: ListTile(leading: const AppIcon(IconsPack.key, size: 46), title: const Text('Ece sana bir anahtar gönderdi'), subtitle: const Text('“Kahve, sahil ve uzun bir yürüyüş.”'), trailing: FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchScreen())), child: const Text('Aç')))),
           ]),
         ),
       );
@@ -495,7 +504,7 @@ class MatchScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(28),
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const AssetSvg('assets/icons_pack/gradient/icon_unlock.svg', size: 160),
+              const AppIcon(IconsPack.unlock, size: 160, card: true),
               const SizedBox(height: 24),
               const Text('Kilit açıldı.', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
               const SizedBox(height: 12),
@@ -517,12 +526,7 @@ class MessagesScreen extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const PageTitle('Mesajlar', 'Kilidi açılan bağlantıların.'),
             const SizedBox(height: 24),
-            ListTile(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen())),
-              leading: const AssetSvg('assets/icons_pack/badge/icon_profile.svg', size: 48, card: false),
-              title: const Text('Ece', style: TextStyle(fontWeight: FontWeight.w800)),
-              subtitle: const Text('Selam 👋'),
-            ),
+            ListTile(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatScreen())), leading: const AppIcon(IconsPack.profile, size: 48), title: const Text('Ece', style: TextStyle(fontWeight: FontWeight.w800)), subtitle: const Text('Selam 👋')),
           ]),
         ),
       );
@@ -540,7 +544,7 @@ class ChatScreen extends StatelessWidget {
             Row(children: [
               const Expanded(child: TextField(decoration: InputDecoration(hintText: 'Mesaj yaz...'))),
               const SizedBox(width: 10),
-              SizedBox(width: 52, height: 52, child: FilledButton(onPressed: () {}, style: FilledButton.styleFrom(padding: EdgeInsets.zero, shape: const CircleBorder()), child: const AssetSvg('assets/icons_pack/gradient/icon_send.svg', size: 28, card: false))),
+              SizedBox(width: 52, height: 52, child: FilledButton(onPressed: () {}, style: FilledButton.styleFrom(padding: EdgeInsets.zero, shape: const CircleBorder()), child: const AppIcon(IconsPack.send, size: 28))),
             ]),
           ]),
         ),
@@ -556,7 +560,7 @@ class MyProfileScreen extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             PageTitle('Profilin', 'Kilit sorularını ve profilini buradan yönet.'),
             SizedBox(height: 28),
-            AssetSvg('assets/icons_pack/badge/icon_profile.svg', size: 110),
+            AppIcon(IconsPack.profile, size: 110, card: true),
             SizedBox(height: 18),
             Text('Tayfun', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
             Text('3 kilit sorusu aktif', style: TextStyle(color: OpenApp.muted)),
