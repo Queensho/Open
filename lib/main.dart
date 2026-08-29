@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 void main() => runApp(const OpenApp());
@@ -71,12 +72,7 @@ class MiniSvg extends StatelessWidget {
   final double size;
   final Color color;
   @override
-  Widget build(BuildContext context) => SvgPicture.asset(
-        path,
-        width: size,
-        height: size,
-        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-      );
+  Widget build(BuildContext context) => SvgPicture.asset(path, width: size, height: size, colorFilter: ColorFilter.mode(color, BlendMode.srcIn));
 }
 
 class PageTitle extends StatelessWidget {
@@ -166,10 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) => Scaffold(
         body: SafeArea(
           child: Column(children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())), child: const Text('Atla')),
-            ),
+            Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())), child: const Text('Atla'))),
             Expanded(
               child: PageView.builder(
                 controller: c,
@@ -200,7 +193,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
-  void go(BuildContext context) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
   @override
   Widget build(BuildContext context) => Scaffold(
         body: SafeArea(
@@ -215,16 +207,119 @@ class LoginScreen extends StatelessWidget {
               const Text('Gerçek bağlantılar burada başlar.', style: TextStyle(fontSize: 18, color: OpenApp.muted)),
               const Spacer(),
               FilledButton(
-                onPressed: () => go(context),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PhoneLoginScreen())),
                 child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [MiniSvg('assets/icons_pack/line/icon_phone.svg', size: 22), SizedBox(width: 10), Text('Telefon ile devam et')]),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(58), shape: const StadiumBorder()),
-                onPressed: () => go(context),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
                 child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [MiniSvg('assets/icons_pack/line/icon_mail.svg', size: 22), SizedBox(width: 10), Text('E-posta ile devam et')]),
               ),
               const SizedBox(height: 24),
+            ]),
+          ),
+        ),
+      );
+}
+
+class PhoneLoginScreen extends StatefulWidget {
+  const PhoneLoginScreen({super.key});
+  @override
+  State<PhoneLoginScreen> createState() => _PhoneLoginScreenState();
+}
+
+class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
+  final phone = TextEditingController();
+  String? error;
+
+  void sendCode() {
+    final digits = phone.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 10) {
+      setState(() => error = 'Geçerli bir telefon numarası gir.');
+      return;
+    }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => OtpScreen(phone: phone.text.trim())));
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(backgroundColor: Colors.transparent),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(26, 12, 26, 28),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const AssetSvg('assets/icons_pack/gradient/icon_phone.svg', size: 76),
+              const SizedBox(height: 26),
+              const PageTitle('Telefon numaranı gir.', 'Sana 6 haneli bir doğrulama kodu göndereceğiz.'),
+              const SizedBox(height: 28),
+              TextField(
+                controller: phone,
+                keyboardType: TextInputType.phone,
+                autofocus: true,
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]'))],
+                decoration: InputDecoration(
+                  prefixText: '+90  ',
+                  labelText: 'Telefon numarası',
+                  hintText: '5XX XXX XX XX',
+                  errorText: error,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text('Şimdilik test doğrulama kodu: 123456', style: TextStyle(color: OpenApp.muted, fontSize: 13)),
+              const Spacer(),
+              FilledButton(onPressed: sendCode, child: const Text('Onay kodu gönder')),
+            ]),
+          ),
+        ),
+      );
+}
+
+class OtpScreen extends StatefulWidget {
+  const OtpScreen({super.key, required this.phone});
+  final String phone;
+  @override
+  State<OtpScreen> createState() => _OtpScreenState();
+}
+
+class _OtpScreenState extends State<OtpScreen> {
+  final code = TextEditingController();
+  String? error;
+
+  void verify() {
+    if (code.text.trim() != '123456') {
+      setState(() => error = 'Kod hatalı. Test kodu: 123456');
+      return;
+    }
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const CreateProfileScreen()), (_) => false);
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(backgroundColor: Colors.transparent),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(26, 12, 26, 28),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const AssetSvg('assets/icons_pack/gradient/icon_unlock.svg', size: 76),
+              const SizedBox(height: 26),
+              PageTitle('Onay kodunu gir.', '+90 ${widget.phone} numarasına gönderilen 6 haneli kodu yaz.'),
+              const SizedBox(height: 28),
+              TextField(
+                controller: code,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                maxLength: 6,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 10),
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
+                decoration: InputDecoration(counterText: '', hintText: '••••••', errorText: error),
+                onSubmitted: (_) => verify(),
+              ),
+              const SizedBox(height: 14),
+              Center(child: TextButton(onPressed: () => setState(() => error = null), child: const Text('Kodu tekrar gönder'))),
+              const Spacer(),
+              FilledButton(onPressed: verify, child: const Text('Doğrula ve devam et')),
             ]),
           ),
         ),
@@ -241,9 +336,9 @@ class RegisterScreen extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const AssetSvg('assets/icons_pack/gradient/icon_unlock.svg', size: 72),
               const SizedBox(height: 24),
-              const PageTitle('Hesabını aç.', 'Kayıt bilgilerini gir, sonra profilini oluştur.'),
+              const PageTitle('Hesabını aç.', 'E-posta ile kayıt bilgilerini gir, sonra profilini oluştur.'),
               const SizedBox(height: 24),
-              const TextField(decoration: InputDecoration(labelText: 'E-posta veya telefon')),
+              const TextField(keyboardType: TextInputType.emailAddress, decoration: InputDecoration(labelText: 'E-posta')),
               const SizedBox(height: 14),
               const TextField(obscureText: true, decoration: InputDecoration(labelText: 'Şifre')),
               const SizedBox(height: 14),
@@ -318,17 +413,15 @@ class DiscoverScreen extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const PageTitle('Keşfet', 'Fotoğraf kilitli. Önce soruyu cevapla.'),
             const Spacer(),
-            Center(
-              child: Column(children: [
-                const AssetSvg('assets/icons_pack/gradient/icon_lock.svg', size: 150),
-                const SizedBox(height: 18),
-                const Text('Deniz, 27', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 8),
-                const Text('“Bir pazar sabahı seni nerede bulurum?”'),
-                const SizedBox(height: 20),
-                FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AnswerScreen())), child: const Text('Soruyu cevapla')),
-              ]),
-            ),
+            Center(child: Column(children: [
+              const AssetSvg('assets/icons_pack/gradient/icon_lock.svg', size: 150),
+              const SizedBox(height: 18),
+              const Text('Deniz, 27', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              const Text('“Bir pazar sabahı seni nerede bulurum?”'),
+              const SizedBox(height: 20),
+              FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AnswerScreen())), child: const Text('Soruyu cevapla')),
+            ])),
             const Spacer(),
           ]),
         ),
@@ -383,14 +476,12 @@ class KeysScreen extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const PageTitle('Anahtarlar', 'Sana gelen cevaplar burada.'),
             const SizedBox(height: 28),
-            Card(
-              child: ListTile(
-                leading: const AssetSvg('assets/icons_pack/gradient/icon_key.svg', size: 46, card: false),
-                title: const Text('Ece sana bir anahtar gönderdi'),
-                subtitle: const Text('“Kahve, sahil ve uzun bir yürüyüş.”'),
-                trailing: FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchScreen())), child: const Text('Aç')),
-              ),
-            ),
+            Card(child: ListTile(
+              leading: const AssetSvg('assets/icons_pack/gradient/icon_key.svg', size: 46, card: false),
+              title: const Text('Ece sana bir anahtar gönderdi'),
+              subtitle: const Text('“Kahve, sahil ve uzun bir yürüyüş.”'),
+              trailing: FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchScreen())), child: const Text('Aç')),
+            )),
           ]),
         ),
       );
