@@ -20,7 +20,28 @@ class OpenBackend {
   Future<void> signOut()=>client.auth.signOut();
   Future<void> saveProfile(String name,String city,String gender)async{final cleanName=name.trim(),cleanCity=city.trim();if(cleanName.isEmpty||cleanCity.isEmpty)throw ArgumentError('Ad ve konum zorunlu');final id=_uid();await client.from('profiles').upsert({'id':id,'display_name':cleanName,'city':cleanCity,'gender':gender});}
   Future<List<Map<String,dynamic>>> saveLockQuestions(List<String> questions)async{final id=_uid();final clean=questions.map((q)=>q.trim()).toList();if(clean.length!=3||clean.any((q)=>q.isEmpty))throw ArgumentError('3 geçerli soru seçilmeli');final rows=await client.from('profile_questions').upsert([for(var i=0;i<clean.length;i++){'profile_id':id,'question':clean[i],'position':i+1}],onConflict:'profile_id,position').select('id,question,position').order('position');await client.from('profiles').update({'profile_complete':true}).eq('id',id);return List<Map<String,dynamic>>.from(rows);}
-  Future<List<Map<String,dynamic>>> discover()async{final id=_uid();final data=await client.from('profiles').select('id,display_name,birth_date,bio,city,avatar_url,gallery_urls,interests,is_online,is_verified,profile_questions(id,question,position)').eq('profile_complete',true).neq('id',id).limit(30);return List<Map<String,dynamic>>.from(data);}
+
+  int _age(dynamic birthDate){if(birthDate==null)return -1;final d=DateTime.tryParse(birthDate.toString());if(d==null)return -1;final now=DateTime.now();var age=now.year-d.year;if(now.month<d.month||(now.month==d.month&&now.day<d.day))age--;return age;}
+  bool _genderMatches(String pref,dynamic gender){final p=pref.trim().toLowerCase(),g=(gender??'').toString().trim().toLowerCase();if(p.isEmpty||p=='herkes')return true;if(p.startsWith('kad'))return g.startsWith('kad')||g=='female'||g=='woman';if(p.startsWith('erk'))return g.startsWith('erk')||g=='male'||g=='man';return true;}
+  Future<List<Map<String,dynamic>>> discover()async{
+    final id=_uid();
+    final settingRows=await client.from('user_settings').select('looking_for,min_age,max_age,max_distance_km,discover_city').eq('user_id',id).limit(1);
+    final s=settingRows.isEmpty?<String,dynamic>{}:Map<String,dynamic>.from(settingRows.first);
+    final lookingFor=(s['looking_for']??'Herkes').toString();
+    final minAge=(s['min_age'] as num?)?.toInt()??18,maxAge=(s['max_age'] as num?)?.toInt()??80;
+    final discoverCity=(s['discover_city']??'').toString().trim().toLowerCase();
+    final data=await client.from('profiles').select('id,display_name,birth_date,bio,city,gender,avatar_url,gallery_urls,interests,is_online,is_verified,account_paused,profile_questions(id,question,position)').eq('profile_complete',true).neq('id',id).limit(100);
+    final rows=List<Map<String,dynamic>>.from(data);
+    return rows.where((p){
+      if(p['account_paused']==true)return false;
+      if(!_genderMatches(lookingFor,p['gender']))return false;
+      final age=_age(p['birth_date']);
+      if(age>=0&&(age<minAge||age>maxAge))return false;
+      if(discoverCity.isNotEmpty){final city=(p['city']??'').toString().trim().toLowerCase();if(city!=discoverCity)return false;}
+      return true;
+    }).take(30).toList();
+  }
+
   Future<void> sendKey(String receiverId,String questionId,String answer)async{final cleanAnswer=answer.trim();if(cleanAnswer.isEmpty)throw ArgumentError('Cevap boş olamaz');await client.from('key_requests').insert({'sender_id':_uid(),'receiver_id':receiverId,'question_id':questionId,'answer':cleanAnswer});}
   Future<List<Map<String,dynamic>>> incomingKeys()async{final data=await client.from('key_requests').select('id,sender_id,answer,status,created_at,profiles!key_requests_sender_id_fkey(display_name,avatar_url),profile_questions(question)').eq('receiver_id',_uid()).order('created_at',ascending:false);return List<Map<String,dynamic>>.from(data);}
   Future<void> rejectKey(String requestId)async{final me=_uid();await client.from('key_requests').update({'status':'rejected','responded_at':DateTime.now().toUtc().toIso8601String()}).eq('id',requestId).eq('receiver_id',me).eq('status','pending');}
