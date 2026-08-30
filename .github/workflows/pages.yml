@@ -41,8 +41,13 @@ jobs:
       - name: Analyze app
         run: flutter analyze lib
 
-      - name: Build web
-        run: flutter build web --release --target lib/bootstrap.dart --base-href "/Open/"
+      - name: Build web without service worker cache
+        run: flutter build web --release --target lib/bootstrap.dart --base-href "/Open/" --pwa-strategy=none
+
+      - name: Remove stale service worker artifacts
+        run: |
+          rm -f build/web/flutter_service_worker.js
+          rm -f build/web/version.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
