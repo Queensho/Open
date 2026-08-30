@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'data/open_backend.dart';
 import 'main.dart' as ui;
+import 'real_social_flow.dart';
 
 class RealAppShell extends StatefulWidget {
   const RealAppShell({super.key, this.onSignedOut});
@@ -17,8 +18,8 @@ class _RealAppShellState extends State<RealAppShell> {
   Widget build(BuildContext context) {
     final pages = <Widget>[
       const RealDiscoverScreen(),
-      const ui.KeysScreen(),
-      const ui.MessagesScreen(),
+      const RealKeysScreen(),
+      const RealMessagesScreen(),
       _RealProfileScreen(onSignedOut: widget.onSignedOut),
     ];
     final icons = [
@@ -81,7 +82,7 @@ class _RealProfileScreenState extends State<_RealProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Çıkış yapılsın mı?'),
-        content: const Text('Hesabından çıkış yapacaksın. Tekrar giriş yapmak için e-posta ve şifreni kullanabilirsin.'),
+        content: const Text('Hesabından çıkış yapacaksın. Tekrar giriş yapmak için e-posta veya telefonunu kullanabilirsin.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
           FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Çıkış yap')),
