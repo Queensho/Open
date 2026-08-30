@@ -6,46 +6,17 @@ import 'real_app_shell.dart';
 
 class DirectOpenApp extends StatelessWidget {
   const DirectOpenApp({super.key});
-
   @override
-  Widget build(BuildContext context) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Open',
-        theme: ThemeData(
-          useMaterial3: true,
-          scaffoldBackgroundColor: Colors.white,
-          colorScheme: ColorScheme.fromSeed(seedColor: ui.OpenApp.lime),
-          inputDecorationTheme: InputDecorationTheme(filled: true, fillColor: ui.OpenApp.soft, border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: const BorderSide(color: ui.OpenApp.lime, width: 2)), contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17)),
-          filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: ui.OpenApp.lime, foregroundColor: ui.OpenApp.ink, minimumSize: const Size.fromHeight(58), shape: const StadiumBorder(), textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
-        ),
-        home: const _Splash(),
-      );
+  Widget build(BuildContext context) => MaterialApp(debugShowCheckedModeBanner: false, title: 'Open', theme: ThemeData(useMaterial3: true, scaffoldBackgroundColor: Colors.white, colorScheme: ColorScheme.fromSeed(seedColor: ui.OpenApp.lime), inputDecorationTheme: InputDecorationTheme(filled: true, fillColor: ui.OpenApp.soft, border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: const BorderSide(color: ui.OpenApp.lime, width: 2)), contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17)), filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: ui.OpenApp.lime, foregroundColor: ui.OpenApp.ink, minimumSize: const Size.fromHeight(58), shape: const StadiumBorder(), textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)))), home: const _Splash());
 }
 
 Widget _appShell() => Builder(builder: (context) => RealAppShell(onSignedOut: () => Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const _Welcome()), (_) => false)));
-
-Future<void> _continueAfterAuth(BuildContext context) async {
-  final complete = await OpenBackend.instance.hasCompletedProfile();
-  if (!context.mounted) return;
-  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen()), (_) => false);
-}
+Future<void> _continueAfterAuth(BuildContext context) async { final complete = await OpenBackend.instance.hasCompletedProfile(); if (!context.mounted) return; Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen()), (_) => false); }
 
 class _Splash extends StatefulWidget { const _Splash(); @override State<_Splash> createState() => _SplashState(); }
 class _SplashState extends State<_Splash> {
   @override void initState() { super.initState(); _route(); }
-  Future<void> _route() async {
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    if (OpenBackend.instance.isAuthenticated) {
-      try {
-        final complete = await OpenBackend.instance.hasCompletedProfile();
-        if (!mounted) return;
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen()));
-        return;
-      } catch (_) {}
-    }
-    if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _Welcome()));
-  }
+  Future<void> _route() async { await Future.delayed(const Duration(milliseconds: 900)); if (!mounted) return; if (OpenBackend.instance.isAuthenticated) { try { final complete = await OpenBackend.instance.hasCompletedProfile(); if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen())); return; } catch (_) {} } if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _Welcome())); }
   @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [ui.AppSvg(ui.AppIcons.splash, size: 118, card: true), SizedBox(height: 26), Text('Open', style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900))])));
 }
 
@@ -56,15 +27,23 @@ class _Welcome extends StatelessWidget {
 
 class _LoginScreen extends StatefulWidget { const _LoginScreen(); @override State<_LoginScreen> createState() => _LoginScreenState(); }
 class _LoginScreenState extends State<_LoginScreen> {
-  final email = TextEditingController(); final password = TextEditingController(); bool busy = false; String? error;
-  Future<void> login() async { if (email.text.trim().isEmpty || password.text.length < 6) { setState(() => error = 'E-posta ve en az 6 karakter şifre gir.'); return; } setState(() { busy = true; error = null; }); try { await OpenBackend.instance.loginEmail(email.text, password.text); if (!mounted) return; await _continueAfterAuth(context); } catch (_) { if (mounted) setState(() => error = 'E-posta veya şifre hatalı.'); } finally { if (mounted) setState(() => busy = false); } }
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.all(26), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.PageTitle('Tekrar hoş geldin.', 'Hesabına giriş yap ve kaldığın yerden devam et.'), const SizedBox(height: 26), TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')), const SizedBox(height: 12), TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre')), if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))), const Spacer(), FilledButton(onPressed: busy ? null : login, child: Text(busy ? 'Giriş yapılıyor...' : 'Giriş yap'))]))));
+  final email = TextEditingController(); final password = TextEditingController(); final phone = TextEditingController(); bool phoneMode = false; bool busy = false; String? error;
+  String normalizedPhone() { var p = phone.text.replaceAll(RegExp(r'\D'), ''); if (p.startsWith('0')) p = p.substring(1); if (!p.startsWith('90')) p = '90$p'; return '+$p'; }
+  Future<void> loginEmail() async { if (email.text.trim().isEmpty || password.text.length < 6) { setState(() => error = 'E-posta ve en az 6 karakter şifre gir.'); return; } setState(() { busy = true; error = null; }); try { await OpenBackend.instance.loginEmail(email.text, password.text); if (!mounted) return; await _continueAfterAuth(context); } catch (_) { if (mounted) setState(() => error = 'E-posta veya şifre hatalı.'); } finally { if (mounted) setState(() => busy = false); } }
+  Future<void> sendOtp() async { if (phone.text.replaceAll(RegExp(r'\D'), '').length < 10) { setState(() => error = 'Geçerli telefon numarası gir.'); return; } setState(() { busy = true; error = null; }); try { final p = normalizedPhone(); await OpenBackend.instance.sendPhoneOtp(p); if (!mounted) return; Navigator.push(context, MaterialPageRoute(builder: (_) => _PhoneOtpScreen(phone: p))); } catch (e) { if (mounted) setState(() => error = 'SMS gönderilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
+  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.all(26), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.PageTitle('Tekrar hoş geldin.', 'E-posta veya telefon numaranla giriş yap.'), const SizedBox(height: 24), SegmentedButton<bool>(segments: const [ButtonSegment(value: false, label: Text('E-posta'), icon: Icon(Icons.mail_outline)), ButtonSegment(value: true, label: Text('Telefon'), icon: Icon(Icons.phone_outlined))], selected: {phoneMode}, onSelectionChanged: busy ? null : (v) => setState(() { phoneMode = v.first; error = null; })), const SizedBox(height: 22), if (!phoneMode) ...[TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')), const SizedBox(height: 12), TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre'))] else TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Telefon numarası', prefixText: '+90 ', hintText: '5XX XXX XX XX')), if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))), const Spacer(), FilledButton(onPressed: busy ? null : (phoneMode ? sendOtp : loginEmail), child: Text(busy ? 'Lütfen bekle...' : (phoneMode ? 'SMS kodu gönder' : 'Giriş yap'))]))));
+}
+
+class _PhoneOtpScreen extends StatefulWidget { const _PhoneOtpScreen({required this.phone}); final String phone; @override State<_PhoneOtpScreen> createState() => _PhoneOtpScreenState(); }
+class _PhoneOtpScreenState extends State<_PhoneOtpScreen> {
+  final code = TextEditingController(); bool busy = false; String? error;
+  Future<void> verify() async { if (code.text.trim().length != 6) { setState(() => error = '6 haneli SMS kodunu gir.'); return; } setState(() { busy = true; error = null; }); try { await OpenBackend.instance.verifyPhoneOtp(widget.phone, code.text); if (!mounted) return; await _continueAfterAuth(context); } catch (_) { if (mounted) setState(() => error = 'Kod hatalı veya süresi dolmuş.'); } finally { if (mounted) setState(() => busy = false); } }
+  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.all(26), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [ui.PageTitle('Kodu gir.', '${widget.phone} numarasına gelen 6 haneli kodu yaz.'), const SizedBox(height: 26), TextField(controller: code, keyboardType: TextInputType.number, maxLength: 6, decoration: const InputDecoration(labelText: 'SMS kodu')), if (error != null) Text(error!, style: const TextStyle(color: Colors.red)), const Spacer(), FilledButton(onPressed: busy ? null : verify, child: Text(busy ? 'Doğrulanıyor...' : 'Giriş yap'))]))));
 }
 
 class _Onboarding extends StatefulWidget { const _Onboarding(); @override State<_Onboarding> createState() => _OnboardingState(); }
 class _OnboardingState extends State<_Onboarding> {
-  final controller = PageController(); int page = 0;
-  final pages = const [('Profil değil,\ninsanı keşfet.', 'Önce soruları cevapla, sonra karar ver.', ui.AppIcons.lock), ('3 kilit soru,\nyüzlerce olasılık.', 'Merak uyandıran sorularla daha anlamlı sohbetler.', ui.AppIcons.question), ('Doğru kişiyle\nanahtarın uyusun.', 'Anahtarını gönder. Kabul edilirse profil açılır.', ui.AppIcons.key), ('Gerçek bağlantılar\nburada başlar.', 'Daha az yüzeysel, daha çok sen.', ui.AppIcons.unlock)];
+  final controller = PageController(); int page = 0; final pages = const [('Profil değil,\ninsanı keşfet.', 'Önce soruları cevapla, sonra karar ver.', ui.AppIcons.lock), ('3 kilit soru,\nyüzlerce olasılık.', 'Merak uyandıran sorularla daha anlamlı sohbetler.', ui.AppIcons.question), ('Doğru kişiyle\nanahtarın uyusun.', 'Anahtarını gönder. Kabul edilirse profil açılır.', ui.AppIcons.key), ('Gerçek bağlantılar\nburada başlar.', 'Daha az yüzeysel, daha çok sen.', ui.AppIcons.unlock)];
   void next() { if (page < pages.length - 1) { controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic); } else { Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _RegisterScreen())); } }
   @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Column(children: [Align(alignment: Alignment.centerRight, child: Padding(padding: const EdgeInsets.only(right: 18, top: 4), child: TextButton(onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _RegisterScreen())), child: const Text('Atla', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800))))), Expanded(child: PageView.builder(controller: controller, itemCount: pages.length, onPageChanged: (v) => setState(() => page = v), itemBuilder: (_, i) { final item = pages[i]; return Padding(padding: const EdgeInsets.fromLTRB(28, 6, 28, 24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: Center(child: ui.AppSvg(item.$3, size: 150, card: true))), Text(item.$1, style: const TextStyle(fontSize: 34, height: 1.05, fontWeight: FontWeight.w900)), const SizedBox(height: 12), Text(item.$2, style: const TextStyle(color: ui.OpenApp.muted, fontSize: 16, height: 1.4)), const SizedBox(height: 20), FilledButton(onPressed: next, child: Text(i == pages.length - 1 ? 'Hadi başlayalım' : 'Devam et'))])); }))])));
 }
@@ -85,8 +64,7 @@ class _ProfileScreenState extends State<_ProfileScreen> {
 
 class _QuestionsScreen extends StatefulWidget { const _QuestionsScreen(); @override State<_QuestionsScreen> createState() => _QuestionsScreenState(); }
 class _QuestionsScreenState extends State<_QuestionsScreen> {
-  final selected = <int>{}; bool busy = false; String? error;
-  final questions = const ['Bir pazar sabahı seni nerede bulurum?', 'Seni güldüren küçük şey ne?', 'Birine hemen güvenmeni sağlayan şey?', 'Hayalindeki plansız gün nasıl geçer?', 'Bir şarkı seni hangi ana götürür?', 'İlk buluşmada en çok neye dikkat edersin?'];
+  final selected = <int>{}; bool busy = false; String? error; final questions = const ['Bir pazar sabahı seni nerede bulurum?', 'Seni güldüren küçük şey ne?', 'Birine hemen güvenmeni sağlayan şey?', 'Hayalindeki plansız gün nasıl geçer?', 'Bir şarkı seni hangi ana götürür?', 'İlk buluşmada en çok neye dikkat edersin?'];
   Future<void> finish() async { if (selected.length != 3) return; setState(() { busy = true; error = null; }); try { final chosen = selected.toList()..sort(); await OpenBackend.instance.saveLockQuestions(chosen.map((i) => questions[i]).toList()); if (!mounted) return; Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => _appShell()), (_) => false); } catch (e) { if (mounted) setState(() => error = 'Sorular kaydedilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
   @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(26, 4, 26, 28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.StepHeader(step: 2, total: 2), const SizedBox(height: 24), const ui.PageTitle('3 kilit sorunu seç.', 'Seni keşfetmek isteyen kişi önce bu sorulardan birini cevaplayacak.'), const SizedBox(height: 18), Expanded(child: ListView.separated(itemCount: questions.length, separatorBuilder: (_, __) => const SizedBox(height: 10), itemBuilder: (_, i) { final active = selected.contains(i); return InkWell(onTap: busy ? null : () => setState(() { if (active) { selected.remove(i); } else if (selected.length < 3) { selected.add(i); } }), borderRadius: BorderRadius.circular(22), child: Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: active ? ui.OpenApp.lime.withValues(alpha: .16) : ui.OpenApp.soft, borderRadius: BorderRadius.circular(22), border: Border.all(color: active ? ui.OpenApp.lime : Colors.transparent, width: 2)), child: Row(children: [Expanded(child: Text(questions[i], style: const TextStyle(fontWeight: FontWeight.w700))), ui.AppSvg(active ? ui.AppIcons.unlock : ui.AppIcons.lock, size: 28)]))); })), if (error != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(error!, style: const TextStyle(color: Colors.red))), FilledButton(onPressed: selected.length == 3 && !busy ? finish : null, child: Text(busy ? 'Kaydediliyor...' : (selected.length == 3 ? 'Profili tamamla' : '${selected.length}/3 soru seçildi')))]))));
 }
