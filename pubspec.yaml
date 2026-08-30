@@ -20,6 +20,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icons/
-    - assets/icons_svg/
-    - assets/icons_pack/
+    - assets/app_icons/gradient/
+    - assets/app_icons/line/
+    - assets/app_icons/nav/
+    - assets/app_icons/badge/
