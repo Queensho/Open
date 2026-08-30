@@ -5,7 +5,6 @@ import 'main.dart' as ui;
 
 class RealProfileScreen extends StatefulWidget {
   const RealProfileScreen({super.key, this.onSignedOut});
-
   final VoidCallback? onSignedOut;
 
   @override
@@ -29,7 +28,7 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
   Future<void> _load() async {
     final id = OpenBackend.instance.userId;
     if (id == null) return;
-    setState(() => loading = true);
+    if (mounted) setState(() => loading = true);
     try {
       final p = await OpenBackend.instance.client
           .from('profiles')
@@ -51,11 +50,13 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
         profile = p == null ? <String, dynamic>{} : Map<String, dynamic>.from(p);
         questions = List<Map<String, dynamic>>.from(q);
         matchCount = matches.length;
-        keyCount = (keys as List).length;
+        keyCount = List<dynamic>.from(keys).length;
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profil yüklenemedi: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profil yüklenemedi: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -69,43 +70,73 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
     if (birth == null) return null;
     final now = DateTime.now();
     var age = now.year - birth.year;
-    if (now.month < birth.month || (now.month == birth.month && now.day < birth.day)) age--;
+    if (now.month < birth.month ||
+        (now.month == birth.month && now.day < birth.day)) {
+      age--;
+    }
     return age;
   }
 
   Future<void> _editQuestions() async {
-    final current = List<String>.generate(3, (i) {
-      if (i < questions.length) return questions[i]['question']?.toString() ?? '';
-      return '';
-    });
-    final controllers = current.map(TextEditingController.new).toList();
+    final current = List<String>.generate(
+      3,
+      (i) => i < questions.length
+          ? (questions[i]['question']?.toString() ?? '')
+          : '',
+    );
+    final controllers = current
+        .map((text) => TextEditingController(text: text))
+        .toList(growable: false);
+
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
       builder: (context) => Padding(
-        padding: EdgeInsets.fromLTRB(22, 22, 22, MediaQuery.of(context).viewInsets.bottom + 24),
+        padding: EdgeInsets.fromLTRB(
+          22,
+          22,
+          22,
+          MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              const Expanded(child: Text('Sorularını düzenle', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),
-              IconButton(onPressed: () => Navigator.pop(context, false), icon: const Icon(Icons.close_rounded)),
-            ]),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Sorularını düzenle',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
-            const Text('Profil kilidini açmak için karşı taraf bu 3 sorudan birini cevaplar.', style: TextStyle(color: ui.OpenApp.muted)),
+            const Text(
+              'Profil kilidini açmak için karşı taraf bu 3 sorudan birini cevaplar.',
+              style: TextStyle(color: ui.OpenApp.muted),
+            ),
             const SizedBox(height: 18),
             for (var i = 0; i < 3; i++) ...[
               TextField(
                 controller: controllers[i],
                 maxLength: 90,
-                decoration: InputDecoration(labelText: '${i + 1}. soru', prefixIcon: const Icon(Icons.lock_outline_rounded)),
+                decoration: InputDecoration(
+                  labelText: '${i + 1}. soru',
+                  prefixIcon: const Icon(Icons.lock_outline_rounded),
+                ),
               ),
               const SizedBox(height: 8),
             ],
-            const SizedBox(height: 6),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -120,16 +151,36 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
         ),
       ),
     );
-    if (saved != true) return;
+
+    if (saved != true) {
+      for (final controller in controllers) {
+        controller.dispose();
+      }
+      return;
+    }
+
     setState(() => busy = true);
     try {
-      await OpenBackend.instance.saveLockQuestions(controllers.map((c) => c.text.trim()).toList());
+      final values = controllers
+          .map<String>((controller) => controller.text.trim())
+          .toList(growable: false);
+      await OpenBackend.instance.saveLockQuestions(values);
       await _load();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Soruların güncellendi 🔐')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Soruların güncellendi 🔐')),
+        );
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sorular kaydedilemedi: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sorular kaydedilemedi: $e')),
+        );
+      }
     } finally {
-      for (final c in controllers) c.dispose();
+      for (final controller in controllers) {
+        controller.dispose();
+      }
       if (mounted) setState(() => busy = false);
     }
   }
@@ -139,10 +190,18 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Çıkış yapılsın mı?'),
-        content: const Text('Hesabından çıkış yapacaksın. Tekrar giriş yapmak için e-posta veya telefonunu kullanabilirsin.'),
+        content: const Text(
+          'Hesabından çıkış yapacaksın. Tekrar giriş yapmak için e-posta veya telefonunu kullanabilirsin.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Çıkış yap')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Çıkış yap'),
+          ),
         ],
       ),
     );
@@ -159,7 +218,10 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (loading) return const SafeArea(child: Center(child: CircularProgressIndicator()));
+    if (loading) {
+      return const SafeArea(child: Center(child: CircularProgressIndicator()));
+    }
+
     final name = (profile['display_name'] ?? 'Open kullanıcısı').toString();
     final city = (profile['city'] ?? '').toString();
     final avatar = profile['avatar_url']?.toString();
@@ -174,9 +236,19 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
           children: [
             Row(
               children: [
-                Container(width: 46, height: 46, decoration: _circleDecoration(), child: const Icon(Icons.auto_awesome_rounded, color: ui.OpenApp.lime)),
+                _TopCircle(
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: ui.OpenApp.lime,
+                  ),
+                ),
                 const Spacer(),
-                Container(width: 46, height: 46, decoration: _circleDecoration(), child: IconButton(onPressed: () {}, icon: const Icon(Icons.settings_outlined))),
+                _TopCircle(
+                  child: IconButton(
+                    onPressed: () {},
+                    icon: const Icon(Icons.settings_outlined),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 4),
@@ -191,20 +263,38 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
-                      boxShadow: [BoxShadow(color: ui.OpenApp.lime.withValues(alpha: .20), blurRadius: 38, spreadRadius: 7)],
+                      boxShadow: [
+                        BoxShadow(
+                          color: ui.OpenApp.lime.withValues(alpha: .20),
+                          blurRadius: 38,
+                          spreadRadius: 7,
+                        ),
+                      ],
                     ),
                     child: CircleAvatar(
                       backgroundColor: ui.OpenApp.soft,
                       backgroundImage: hasAvatar ? NetworkImage(avatar) : null,
-                      child: hasAvatar ? null : const Icon(Icons.person_rounded, size: 82, color: ui.OpenApp.ink),
+                      child: hasAvatar
+                          ? null
+                          : const Icon(
+                              Icons.person_rounded,
+                              size: 82,
+                              color: ui.OpenApp.ink,
+                            ),
                     ),
                   ),
                   Positioned(
                     right: 3,
                     bottom: 8,
-                    child: InkWell(
-                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fotoğraf yükleme sıradaki adımda bağlanacak.'))),
-                      child: Container(width: 54, height: 54, decoration: BoxDecoration(color: ui.OpenApp.lime, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 4)), child: const Icon(Icons.camera_alt_outlined)),
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: ui.OpenApp.lime,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                      ),
+                      child: const Icon(Icons.camera_alt_outlined),
                     ),
                   ),
                 ],
@@ -215,45 +305,108 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('$name${age == null ? '' : ', $age'}', style: const TextStyle(fontSize: 34, height: 1, fontWeight: FontWeight.w900, letterSpacing: -1)),
-                  if (profile['is_verified'] == true) ...[const SizedBox(width: 7), const Icon(Icons.verified_rounded, color: ui.OpenApp.lime, size: 24)],
+                  Text(
+                    '$name${age == null ? '' : ', $age'}',
+                    style: const TextStyle(
+                      fontSize: 34,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  if (profile['is_verified'] == true) ...[
+                    const SizedBox(width: 7),
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: ui.OpenApp.lime,
+                      size: 24,
+                    ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(height: 10),
-            Center(child: Text('${city.isEmpty ? 'Konum ekle' : city}  ·  ${profile['is_online'] == true ? 'Aktif' : 'Profilin'}', style: const TextStyle(color: ui.OpenApp.muted, fontSize: 15))),
+            Center(
+              child: Text(
+                '${city.isEmpty ? 'Konum ekle' : city}  ·  ${profile['is_online'] == true ? 'Aktif' : 'Profilin'}',
+                style: const TextStyle(color: ui.OpenApp.muted, fontSize: 15),
+              ),
+            ),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _RoundAction(icon: Icons.settings_outlined, label: 'Ayarlar', onTap: () {}),
+                _RoundAction(
+                  icon: Icons.settings_outlined,
+                  label: 'Ayarlar',
+                  onTap: () {},
+                ),
                 const SizedBox(width: 34),
-                _RoundAction(icon: Icons.add_a_photo_outlined, label: 'Medya Ekle', large: true, onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Medya yükleme sıradaki adımda bağlanacak.')))),
+                _RoundAction(
+                  icon: Icons.add_a_photo_outlined,
+                  label: 'Medya Ekle',
+                  large: true,
+                  onTap: () {},
+                ),
                 const SizedBox(width: 34),
-                _RoundAction(icon: Icons.shield_outlined, label: 'Güvenlik', onTap: () {}),
+                _RoundAction(
+                  icon: Icons.shield_outlined,
+                  label: 'Güvenlik',
+                  onTap: () {},
+                ),
               ],
             ),
             const SizedBox(height: 28),
             Container(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .055), blurRadius: 25, offset: const Offset(0, 8))]),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: .055),
+                    blurRadius: 25,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
               child: Column(
                 children: [
-                  Row(children: [
-                    const Text('Soruların ✨', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900, letterSpacing: -.5)),
-                    const Spacer(),
-                    TextButton.icon(onPressed: busy ? null : _editQuestions, icon: const Icon(Icons.edit_outlined, size: 18), label: const Text('Düzenle')),
-                  ]),
+                  Row(
+                    children: [
+                      const Text(
+                        'Soruların ✨',
+                        style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -.5,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: busy ? null : _editQuestions,
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Düzenle'),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 6),
                   if (questions.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: TextButton(onPressed: _editQuestions, child: const Text('3 kilit sorunu oluştur')),
+                      child: TextButton(
+                        onPressed: _editQuestions,
+                        child: const Text('3 kilit sorunu oluştur'),
+                      ),
                     )
                   else
                     for (var i = 0; i < questions.length; i++) ...[
-                      _QuestionTile(question: questions[i]['question']?.toString() ?? '', onEdit: _editQuestions),
-                      if (i != questions.length - 1) const SizedBox(height: 9),
+                      _QuestionTile(
+                        question: questions[i]['question']?.toString() ?? '',
+                        onEdit: _editQuestions,
+                      ),
+                      if (i != questions.length - 1)
+                        const SizedBox(height: 9),
                     ],
                 ],
               ),
@@ -261,26 +414,71 @@ class _RealProfileScreenState extends State<RealProfileScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _StatCard(icon: Icons.people_alt_outlined, label: 'Eşleşme', value: '$matchCount')),
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.people_alt_outlined,
+                    label: 'Eşleşme',
+                    value: '$matchCount',
+                  ),
+                ),
                 const SizedBox(width: 9),
-                Expanded(child: _StatCard(icon: Icons.key_outlined, label: 'Anahtarlar', value: '$keyCount')),
+                Expanded(
+                  child: _StatCard(
+                    icon: Icons.key_outlined,
+                    label: 'Anahtarlar',
+                    value: '$keyCount',
+                  ),
+                ),
                 const SizedBox(width: 9),
-                const Expanded(child: _StatCard(icon: Icons.trending_up_rounded, label: 'Cevap Oranı', value: '—')),
+                const Expanded(
+                  child: _StatCard(
+                    icon: Icons.trending_up_rounded,
+                    label: 'Cevap Oranı',
+                    value: '—',
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            TextButton.icon(onPressed: busy ? null : _signOut, icon: const Icon(Icons.logout_rounded), label: const Text('Çıkış yap'), style: TextButton.styleFrom(foregroundColor: Colors.red.shade700)),
+            TextButton.icon(
+              onPressed: busy ? null : _signOut,
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text('Çıkış yap'),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  BoxDecoration _circleDecoration() => BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .07), blurRadius: 16)]);
+class _TopCircle extends StatelessWidget {
+  const _TopCircle({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: .07), blurRadius: 16),
+          ],
+        ),
+        child: child,
+      );
 }
 
 class _RoundAction extends StatelessWidget {
-  const _RoundAction({required this.icon, required this.label, required this.onTap, this.large = false});
+  const _RoundAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.large = false,
+  });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -295,12 +493,28 @@ class _RoundAction extends StatelessWidget {
             child: Container(
               width: large ? 92 : 64,
               height: large ? 92 : 64,
-              decoration: BoxDecoration(color: large ? ui.OpenApp.lime : Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: (large ? ui.OpenApp.lime : Colors.black).withValues(alpha: large ? .24 : .07), blurRadius: 24)]),
+              decoration: BoxDecoration(
+                color: large ? ui.OpenApp.lime : Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: (large ? ui.OpenApp.lime : Colors.black)
+                        .withValues(alpha: large ? .24 : .07),
+                    blurRadius: 24,
+                  ),
+                ],
+              ),
               child: Icon(icon, size: large ? 39 : 28),
             ),
           ),
           const SizedBox(height: 8),
-          Text(label, style: TextStyle(fontSize: large ? 16 : 13, fontWeight: large ? FontWeight.w800 : FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: large ? 16 : 13,
+              fontWeight: large ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
         ],
       );
 }
@@ -313,13 +527,36 @@ class _QuestionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-        decoration: BoxDecoration(color: ui.OpenApp.soft, borderRadius: BorderRadius.circular(21)),
+        decoration: BoxDecoration(
+          color: ui.OpenApp.soft,
+          borderRadius: BorderRadius.circular(21),
+        ),
         child: Row(
           children: [
-            Container(width: 43, height: 43, decoration: BoxDecoration(color: ui.OpenApp.lime.withValues(alpha: .18), shape: BoxShape.circle), child: const Icon(Icons.format_quote_rounded)),
+            Container(
+              width: 43,
+              height: 43,
+              decoration: BoxDecoration(
+                color: ui.OpenApp.lime.withValues(alpha: .18),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.format_quote_rounded),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: Text(question, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, height: 1.25))),
-            IconButton(onPressed: onEdit, icon: const Icon(Icons.edit_outlined, size: 21)),
+            Expanded(
+              child: Text(
+                question,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  height: 1.25,
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined, size: 21),
+            ),
           ],
         ),
       );
@@ -334,12 +571,46 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 13),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .045), blurRadius: 18)]),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: .045), blurRadius: 18),
+          ],
+        ),
         child: Row(
           children: [
-            Container(width: 36, height: 36, decoration: BoxDecoration(color: ui.OpenApp.lime.withValues(alpha: .18), shape: BoxShape.circle), child: Icon(icon, size: 20)),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: ui.OpenApp.lime.withValues(alpha: .18),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 20),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(fontSize: 10.5, color: ui.OpenApp.muted)), Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900))])),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: ui.OpenApp.muted,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       );
