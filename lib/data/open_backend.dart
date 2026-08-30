@@ -14,6 +14,12 @@ class OpenBackend {
   Future<AuthResponse> loginEmail(String email, String password) =>
       client.auth.signInWithPassword(email: email.trim(), password: password);
 
+  Future<void> sendPhoneOtp(String phone) =>
+      client.auth.signInWithOtp(phone: phone.trim());
+
+  Future<AuthResponse> verifyPhoneOtp(String phone, String token) =>
+      client.auth.verifyOTP(phone: phone.trim(), token: token.trim(), type: OtpType.sms);
+
   Future<AuthResponse> startMockPhoneSession() => client.auth.signInAnonymously();
 
   Future<bool> hasCompletedProfile() async {
