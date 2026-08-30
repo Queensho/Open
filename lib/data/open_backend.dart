@@ -43,20 +43,21 @@ class OpenBackend {
           message.contains('invalid login credentials') ||
           message.contains('invalid credentials');
       if (!isMissingAccount) rethrow;
-
-      final created = await client.auth.signUp(
-        email: email,
-        password: password,
-        data: {'phone_mock': phone.trim(), 'mock_phone_account': true},
-      );
-
-      if (created.session != null) return created;
-
-      return client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
     }
+
+    final response = await client.functions.invoke(
+      'mock-phone-auth',
+      body: {'phone': phone.trim(), 'token': token.trim()},
+    );
+
+    if (response.status < 200 || response.status >= 300) {
+      throw AuthException('Mock telefon hesabı oluşturulamadı: ${response.data}');
+    }
+
+    return client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
   }
 
   Future<AuthResponse> startMockPhoneSession() => client.auth.signInAnonymously();
