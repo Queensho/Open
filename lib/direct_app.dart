@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'data/open_backend.dart';
 import 'main.dart' as ui;
+import 'real_app_shell.dart';
 
 class DirectOpenApp extends StatelessWidget {
   const DirectOpenApp({super.key});
@@ -15,14 +16,7 @@ class DirectOpenApp extends StatelessWidget {
           useMaterial3: true,
           scaffoldBackgroundColor: Colors.white,
           colorScheme: ColorScheme.fromSeed(seedColor: ui.OpenApp.lime),
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: ui.OpenApp.soft,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: const BorderSide(color: ui.OpenApp.lime, width: 2)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
-          ),
+          inputDecorationTheme: InputDecorationTheme(filled: true, fillColor: ui.OpenApp.soft, border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: const BorderSide(color: ui.OpenApp.lime, width: 2)), contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17)),
           filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: ui.OpenApp.lime, foregroundColor: ui.OpenApp.ink, minimumSize: const Size.fromHeight(58), shape: const StadiumBorder(), textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
         ),
         home: const _Splash(),
@@ -43,34 +37,20 @@ class _SplashState extends State<_Splash> {
 
 class _Welcome extends StatelessWidget {
   const _Welcome();
-  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Padding(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    const Spacer(), const ui.AppSvg(ui.AppIcons.splash, size: 90, card: true), const SizedBox(height: 28), const Text('Open', style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900)), const SizedBox(height: 18), const Text('Kaydırma.\nÖnce kilidimi aç.', style: TextStyle(fontSize: 31, height: 1.08, fontWeight: FontWeight.w800)), const Spacer(), FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _Onboarding())), child: const Text('Başlayalım')),
-  ]))));
+  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Padding(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Spacer(), const ui.AppSvg(ui.AppIcons.splash, size: 90, card: true), const SizedBox(height: 28), const Text('Open', style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900)), const SizedBox(height: 18), const Text('Kaydırma.\nÖnce kilidimi aç.', style: TextStyle(fontSize: 31, height: 1.08, fontWeight: FontWeight.w800)), const Spacer(), FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _Onboarding())), child: const Text('Başlayalım'))]))));
 }
 
 class _Onboarding extends StatefulWidget { const _Onboarding(); @override State<_Onboarding> createState() => _OnboardingState(); }
 class _OnboardingState extends State<_Onboarding> {
   final controller = PageController(); int page = 0;
-  final pages = const [
-    ('Profil değil,\ninsanı keşfet.', 'Önce soruları cevapla, sonra karar ver.', ui.AppIcons.lock),
-    ('3 kilit soru,\nyüzlerce olasılık.', 'Merak uyandıran sorularla daha anlamlı sohbetler.', ui.AppIcons.question),
-    ('Doğru kişiyle\nanahtarın uyusun.', 'Anahtarını gönder. Kabul edilirse profil açılır.', ui.AppIcons.key),
-    ('Gerçek bağlantılar\nburada başlar.', 'Daha az yüzeysel, daha çok sen.', ui.AppIcons.unlock),
-  ];
+  final pages = const [('Profil değil,\ninsanı keşfet.', 'Önce soruları cevapla, sonra karar ver.', ui.AppIcons.lock), ('3 kilit soru,\nyüzlerce olasılık.', 'Merak uyandıran sorularla daha anlamlı sohbetler.', ui.AppIcons.question), ('Doğru kişiyle\nanahtarın uyusun.', 'Anahtarını gönder. Kabul edilirse profil açılır.', ui.AppIcons.key), ('Gerçek bağlantılar\nburada başlar.', 'Daha az yüzeysel, daha çok sen.', ui.AppIcons.unlock)];
   void next() { if (page < pages.length - 1) { controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic); } else { Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _ContactChoice())); } }
-  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Column(children: [
-    Align(alignment: Alignment.centerRight, child: Padding(padding: const EdgeInsets.only(right: 18, top: 4), child: TextButton(onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _ContactChoice())), child: const Text('Atla', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800))))),
-    Expanded(child: PageView.builder(controller: controller, itemCount: pages.length, onPageChanged: (v) => setState(() => page = v), itemBuilder: (_, i) { final item = pages[i]; return Padding(padding: const EdgeInsets.fromLTRB(28, 6, 28, 24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: Center(child: ui.AppSvg(item.$3, size: 150, card: true))), Text(item.$1, style: const TextStyle(fontSize: 34, height: 1.05, fontWeight: FontWeight.w900)), const SizedBox(height: 12), Text(item.$2, style: const TextStyle(color: ui.OpenApp.muted, fontSize: 16, height: 1.4)), const SizedBox(height: 20), FilledButton(onPressed: next, child: Text(i == pages.length - 1 ? 'Hadi başlayalım' : 'Devam et'))])); }))
-  ])));
+  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Column(children: [Align(alignment: Alignment.centerRight, child: Padding(padding: const EdgeInsets.only(right: 18, top: 4), child: TextButton(onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _ContactChoice())), child: const Text('Atla', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800))))), Expanded(child: PageView.builder(controller: controller, itemCount: pages.length, onPageChanged: (v) => setState(() => page = v), itemBuilder: (_, i) { final item = pages[i]; return Padding(padding: const EdgeInsets.fromLTRB(28, 6, 28, 24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: Center(child: ui.AppSvg(item.$3, size: 150, card: true))), Text(item.$1, style: const TextStyle(fontSize: 34, height: 1.05, fontWeight: FontWeight.w900)), const SizedBox(height: 12), Text(item.$2, style: const TextStyle(color: ui.OpenApp.muted, fontSize: 16, height: 1.4)), const SizedBox(height: 20), FilledButton(onPressed: next, child: Text(i == pages.length - 1 ? 'Hadi başlayalım' : 'Devam et'))])); }))])));
 }
 
 class _ContactChoice extends StatelessWidget {
   const _ContactChoice();
-  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Padding(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    const Spacer(), const ui.AppSvg(ui.AppIcons.splash, size: 82, card: true), const SizedBox(height: 26), const Text('Open', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900)), const SizedBox(height: 12), const Text('Nasıl devam etmek istersin?', style: TextStyle(fontSize: 18, color: ui.OpenApp.muted)), const Spacer(),
-    FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _PhoneInput())), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [ui.AppSvg(ui.AppIcons.phone, size: 23), SizedBox(width: 10), Text('Telefon ile devam et')])), const SizedBox(height: 12),
-    OutlinedButton(style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(58), shape: const StadiumBorder()), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _EmailInput())), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [ui.AppSvg(ui.AppIcons.mail, size: 23), SizedBox(width: 10), Text('E-posta ile devam et')]))
-  ]))));
+  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Padding(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Spacer(), const ui.AppSvg(ui.AppIcons.splash, size: 82, card: true), const SizedBox(height: 26), const Text('Open', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900)), const SizedBox(height: 12), const Text('Nasıl devam etmek istersin?', style: TextStyle(fontSize: 18, color: ui.OpenApp.muted)), const Spacer(), FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _PhoneInput())), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [ui.AppSvg(ui.AppIcons.phone, size: 23), SizedBox(width: 10), Text('Telefon ile devam et')])), const SizedBox(height: 12), OutlinedButton(style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(58), shape: const StadiumBorder()), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _EmailInput())), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [ui.AppSvg(ui.AppIcons.mail, size: 23), SizedBox(width: 10), Text('E-posta ile devam et')]))]))));
 }
 
 class _PhoneInput extends StatefulWidget { const _PhoneInput(); @override State<_PhoneInput> createState() => _PhoneInputState(); }
@@ -98,6 +78,6 @@ class _QuestionsScreen extends StatefulWidget { const _QuestionsScreen(); @overr
 class _QuestionsScreenState extends State<_QuestionsScreen> {
   final selected = <int>{}; bool busy = false; String? error;
   final questions = const ['Bir pazar sabahı seni nerede bulurum?', 'Seni güldüren küçük şey ne?', 'Birine hemen güvenmeni sağlayan şey?', 'Hayalindeki plansız gün nasıl geçer?', 'Bir şarkı seni hangi ana götürür?', 'İlk buluşmada en çok neye dikkat edersin?'];
-  Future<void> finish() async { if (selected.length != 3) return; setState(() { busy = true; error = null; }); try { final chosen = selected.toList()..sort(); await OpenBackend.instance.saveLockQuestions(chosen.map((i) => questions[i]).toList()); if (!mounted) return; Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const ui.AppShell()), (_) => false); } catch (e) { if (mounted) setState(() => error = 'Sorular kaydedilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
+  Future<void> finish() async { if (selected.length != 3) return; setState(() { busy = true; error = null; }); try { final chosen = selected.toList()..sort(); await OpenBackend.instance.saveLockQuestions(chosen.map((i) => questions[i]).toList()); if (!mounted) return; Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const RealAppShell()), (_) => false); } catch (e) { if (mounted) setState(() => error = 'Sorular kaydedilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
   @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(26, 4, 26, 28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.StepHeader(step: 2, total: 2), const SizedBox(height: 24), const ui.PageTitle('3 kilit sorunu seç.', 'Seni keşfetmek isteyen kişi önce bu sorulardan birini cevaplayacak.'), const SizedBox(height: 18), Expanded(child: ListView.separated(itemCount: questions.length, separatorBuilder: (_, __) => const SizedBox(height: 10), itemBuilder: (_, i) { final active = selected.contains(i); return InkWell(onTap: busy ? null : () => setState(() { if (active) { selected.remove(i); } else if (selected.length < 3) { selected.add(i); } }), borderRadius: BorderRadius.circular(22), child: Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: active ? ui.OpenApp.lime.withValues(alpha: .16) : ui.OpenApp.soft, borderRadius: BorderRadius.circular(22), border: Border.all(color: active ? ui.OpenApp.lime : Colors.transparent, width: 2)), child: Row(children: [Expanded(child: Text(questions[i], style: const TextStyle(fontWeight: FontWeight.w700))), ui.AppSvg(active ? ui.AppIcons.unlock : ui.AppIcons.lock, size: 28)]))); })), if (error != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(error!, style: const TextStyle(color: Colors.red))), FilledButton(onPressed: selected.length == 3 && !busy ? finish : null, child: Text(busy ? 'Kaydediliyor...' : (selected.length == 3 ? 'Profili tamamla' : '${selected.length}/3 soru seçildi')))]))));
 }
