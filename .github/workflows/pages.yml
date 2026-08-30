@@ -27,8 +27,8 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate web platform
-        run: flutter create . --platforms=web --project-name open_app --no-pub
+      - name: Generate Flutter platforms
+        run: flutter create . --platforms=web,android --project-name open_app --org com.openapp --no-pub
 
       - name: Reset pub.dev credentials
         run: dart pub token remove https://pub.dev || true
