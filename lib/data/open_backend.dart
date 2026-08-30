@@ -13,9 +13,50 @@ class OpenBackend {
 
   // Development-only mock phone auth. No real SMS is sent yet.
   Future<void> sendPhoneOtp(String phone) async {}
+
+  String _mockPhoneEmail(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    return 'phone_$digits@mock.open.local';
+  }
+
+  String _mockPhonePassword(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    return 'OpenMock!$digits#123456';
+  }
+
   Future<AuthResponse> verifyPhoneOtp(String phone, String token) async {
-    if (token.trim() != '123456') throw const AuthException('Mock kod hatalı');
-    return client.auth.signInAnonymously(data: {'phone_mock': phone.trim()});
+    if (token.trim() != '123456') {
+      throw const AuthException('Mock kod hatalı');
+    }
+
+    final email = _mockPhoneEmail(phone);
+    final password = _mockPhonePassword(phone);
+
+    try {
+      return await client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+    } on AuthException catch (e) {
+      final message = e.message.toLowerCase();
+      final isMissingAccount =
+          message.contains('invalid login credentials') ||
+          message.contains('invalid credentials');
+      if (!isMissingAccount) rethrow;
+
+      final created = await client.auth.signUp(
+        email: email,
+        password: password,
+        data: {'phone_mock': phone.trim(), 'mock_phone_account': true},
+      );
+
+      if (created.session != null) return created;
+
+      return client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+    }
   }
 
   Future<AuthResponse> startMockPhoneSession() => client.auth.signInAnonymously();
