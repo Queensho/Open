@@ -858,7 +858,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         children: [
           _RoundAction(color: Colors.white, icon: Icons.close_rounded, iconColor: OpenApp.coral, onTap: () => move(1)),
           const SizedBox(width: 18),
-          _RoundAction(color: OpenApp.lime, child: const AppSvg(AppIcons.key, size: 38), size: 84, glow: true, onTap: () => _showQuestions(context)),
+          _RoundAction(color: OpenApp.lime, size: 84, glow: true, onTap: () => _showQuestions(context), child: const AppSvg(AppIcons.key, size: 38)),
           const SizedBox(width: 18),
           _RoundAction(color: Colors.white, icon: Icons.favorite_rounded, iconColor: OpenApp.purple, onTap: () => move(1)),
         ],
