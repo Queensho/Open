@@ -14,7 +14,7 @@ class OpenBackend {
   // Development-only mock phone auth. No real SMS is sent yet.
   Future<void> sendPhoneOtp(String phone) async {}
   Future<AuthResponse> verifyPhoneOtp(String phone, String token) async {
-    if (token.trim() != '12345') throw const AuthException('Mock kod hatalı');
+    if (token.trim() != '123456') throw const AuthException('Mock kod hatalı');
     return client.auth.signInAnonymously(data: {'phone_mock': phone.trim()});
   }
 
