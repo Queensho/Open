@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'data/open_backend.dart';
 import 'main.dart' as ui;
+import 'real_keys_screen.dart';
 import 'real_social_flow.dart';
 
 class RealAppShell extends StatefulWidget {
@@ -18,7 +19,7 @@ class _RealAppShellState extends State<RealAppShell> {
   Widget build(BuildContext context) {
     final pages = <Widget>[
       const RealDiscoverScreen(),
-      const RealKeysScreen(),
+      const FixedRealKeysScreen(),
       const RealMessagesScreen(),
       _RealProfileScreen(onSignedOut: widget.onSignedOut),
     ];
