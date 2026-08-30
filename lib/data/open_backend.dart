@@ -25,39 +25,19 @@ class OpenBackend {
   }
 
   Future<AuthResponse> verifyPhoneOtp(String phone, String token) async {
-    if (token.trim() != '123456') {
-      throw const AuthException('Mock kod hatalı');
-    }
-
+    if (token.trim() != '123456') throw const AuthException('Mock kod hatalı');
     final email = _mockPhoneEmail(phone);
     final password = _mockPhonePassword(phone);
-
     try {
-      return await client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      return await client.auth.signInWithPassword(email: email, password: password);
     } on AuthException catch (e) {
       final message = e.message.toLowerCase();
-      final isMissingAccount =
-          message.contains('invalid login credentials') ||
-          message.contains('invalid credentials');
+      final isMissingAccount = message.contains('invalid login credentials') || message.contains('invalid credentials');
       if (!isMissingAccount) rethrow;
     }
-
-    final response = await client.functions.invoke(
-      'mock-phone-auth',
-      body: {'phone': phone.trim(), 'token': token.trim()},
-    );
-
-    if (response.status < 200 || response.status >= 300) {
-      throw AuthException('Mock telefon hesabı oluşturulamadı: ${response.data}');
-    }
-
-    return client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    final response = await client.functions.invoke('mock-phone-auth', body: {'phone': phone.trim(), 'token': token.trim()});
+    if (response.status < 200 || response.status >= 300) throw AuthException('Mock telefon hesabı oluşturulamadı: ${response.data}');
+    return client.auth.signInWithPassword(email: email, password: password);
   }
 
   Future<AuthResponse> startMockPhoneSession() => client.auth.signInAnonymously();
@@ -86,12 +66,15 @@ class OpenBackend {
     await client.from('profiles').upsert({'id': id, 'display_name': cleanName, 'city': cleanCity, 'gender': gender});
   }
 
-  Future<void> saveLockQuestions(List<String> questions) async {
+  Future<List<Map<String, dynamic>>> saveLockQuestions(List<String> questions) async {
     final id = _uid();
-    if (questions.length != 3 || questions.any((q) => q.trim().isEmpty)) throw ArgumentError('3 geçerli soru seçilmeli');
-    await client.from('profile_questions').delete().eq('profile_id', id);
-    await client.from('profile_questions').insert([for (var i = 0; i < questions.length; i++) {'profile_id': id, 'question': questions[i], 'position': i + 1}]);
+    final clean = questions.map((q) => q.trim()).toList();
+    if (clean.length != 3 || clean.any((q) => q.isEmpty)) throw ArgumentError('3 geçerli soru seçilmeli');
+    final rows = await client.from('profile_questions').upsert([
+      for (var i = 0; i < clean.length; i++) {'profile_id': id, 'question': clean[i], 'position': i + 1}
+    ], onConflict: 'profile_id,position').select('id,question,position').order('position');
     await client.from('profiles').update({'profile_complete': true}).eq('id', id);
+    return List<Map<String, dynamic>>.from(rows);
   }
 
   Future<List<Map<String, dynamic>>> discover() async {
@@ -118,59 +101,21 @@ class OpenBackend {
 
   Future<String> acceptKey(String requestId) async {
     final me = _uid();
-    final request = await client
-        .from('key_requests')
-        .select('sender_id,status')
-        .eq('id', requestId)
-        .eq('receiver_id', me)
-        .single();
-
+    final request = await client.from('key_requests').select('sender_id,status').eq('id', requestId).eq('receiver_id', me).single();
     final senderId = request['sender_id'].toString();
-
-    final existing = await client
-        .from('matches')
-        .select('id')
-        .or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)')
-        .eq('active', true)
-        .maybeSingle();
-
+    final existing = await client.from('matches').select('id').or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)').eq('active', true).maybeSingle();
     if (request['status'] == 'pending') {
-      await client
-          .from('key_requests')
-          .update({
-            'status': 'accepted',
-            'responded_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', requestId)
-          .eq('receiver_id', me)
-          .eq('status', 'pending');
+      await client.from('key_requests').update({'status': 'accepted', 'responded_at': DateTime.now().toUtc().toIso8601String()}).eq('id', requestId).eq('receiver_id', me).eq('status', 'pending');
     } else if (request['status'] != 'accepted') {
       throw StateError('Anahtar kabul edilebilir durumda değil');
     }
-
-    if (existing != null) {
-      return existing['id'] as String;
-    }
-
+    if (existing != null) return existing['id'] as String;
     try {
-      final match = await client
-          .from('matches')
-          .insert({
-            'user_a': senderId,
-            'user_b': me,
-            'key_request_id': requestId,
-          })
-          .select('id')
-          .single();
+      final match = await client.from('matches').insert({'user_a': senderId, 'user_b': me, 'key_request_id': requestId}).select('id').single();
       return match['id'] as String;
     } on PostgrestException catch (e) {
       if (e.code != '23505') rethrow;
-      final match = await client
-          .from('matches')
-          .select('id')
-          .or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)')
-          .eq('active', true)
-          .single();
+      final match = await client.from('matches').select('id').or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)').eq('active', true).single();
       return match['id'] as String;
     }
   }
