@@ -22,10 +22,12 @@ class DirectOpenApp extends StatelessWidget {
       );
 }
 
+Widget _appShell() => Builder(builder: (context) => RealAppShell(onSignedOut: () => Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const _Welcome()), (_) => false)));
+
 Future<void> _continueAfterAuth(BuildContext context) async {
   final complete = await OpenBackend.instance.hasCompletedProfile();
   if (!context.mounted) return;
-  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => complete ? const RealAppShell() : const _ProfileScreen()), (_) => false);
+  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen()), (_) => false);
 }
 
 class _Splash extends StatefulWidget { const _Splash(); @override State<_Splash> createState() => _SplashState(); }
@@ -38,7 +40,7 @@ class _SplashState extends State<_Splash> {
       try {
         final complete = await OpenBackend.instance.hasCompletedProfile();
         if (!mounted) return;
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => complete ? const RealAppShell() : const _ProfileScreen()));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen()));
         return;
       } catch (_) {}
     }
@@ -85,6 +87,6 @@ class _QuestionsScreen extends StatefulWidget { const _QuestionsScreen(); @overr
 class _QuestionsScreenState extends State<_QuestionsScreen> {
   final selected = <int>{}; bool busy = false; String? error;
   final questions = const ['Bir pazar sabahı seni nerede bulurum?', 'Seni güldüren küçük şey ne?', 'Birine hemen güvenmeni sağlayan şey?', 'Hayalindeki plansız gün nasıl geçer?', 'Bir şarkı seni hangi ana götürür?', 'İlk buluşmada en çok neye dikkat edersin?'];
-  Future<void> finish() async { if (selected.length != 3) return; setState(() { busy = true; error = null; }); try { final chosen = selected.toList()..sort(); await OpenBackend.instance.saveLockQuestions(chosen.map((i) => questions[i]).toList()); if (!mounted) return; Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const RealAppShell()), (_) => false); } catch (e) { if (mounted) setState(() => error = 'Sorular kaydedilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
+  Future<void> finish() async { if (selected.length != 3) return; setState(() { busy = true; error = null; }); try { final chosen = selected.toList()..sort(); await OpenBackend.instance.saveLockQuestions(chosen.map((i) => questions[i]).toList()); if (!mounted) return; Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => _appShell()), (_) => false); } catch (e) { if (mounted) setState(() => error = 'Sorular kaydedilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
   @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(26, 4, 26, 28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.StepHeader(step: 2, total: 2), const SizedBox(height: 24), const ui.PageTitle('3 kilit sorunu seç.', 'Seni keşfetmek isteyen kişi önce bu sorulardan birini cevaplayacak.'), const SizedBox(height: 18), Expanded(child: ListView.separated(itemCount: questions.length, separatorBuilder: (_, __) => const SizedBox(height: 10), itemBuilder: (_, i) { final active = selected.contains(i); return InkWell(onTap: busy ? null : () => setState(() { if (active) { selected.remove(i); } else if (selected.length < 3) { selected.add(i); } }), borderRadius: BorderRadius.circular(22), child: Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: active ? ui.OpenApp.lime.withValues(alpha: .16) : ui.OpenApp.soft, borderRadius: BorderRadius.circular(22), border: Border.all(color: active ? ui.OpenApp.lime : Colors.transparent, width: 2)), child: Row(children: [Expanded(child: Text(questions[i], style: const TextStyle(fontWeight: FontWeight.w700))), ui.AppSvg(active ? ui.AppIcons.unlock : ui.AppIcons.lock, size: 28)]))); })), if (error != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(error!, style: const TextStyle(color: Colors.red))), FilledButton(onPressed: selected.length == 3 && !busy ? finish : null, child: Text(busy ? 'Kaydediliyor...' : (selected.length == 3 ? 'Profili tamamla' : '${selected.length}/3 soru seçildi')))]))));
 }
