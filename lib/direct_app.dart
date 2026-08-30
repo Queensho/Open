@@ -23,48 +23,56 @@ class DirectOpenApp extends StatelessWidget {
       );
 }
 
-Future<void> _openAnonymousSession(BuildContext context) async {
-  if (!OpenBackend.instance.isAuthenticated) await OpenBackend.instance.startMockPhoneSession();
+Future<void> _continueAfterAuth(BuildContext context) async {
+  final complete = await OpenBackend.instance.hasCompletedProfile();
   if (!context.mounted) return;
-  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const _ProfileScreen()), (_) => false);
+  Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => complete ? const RealAppShell() : const _ProfileScreen()), (_) => false);
 }
 
 class _Splash extends StatefulWidget { const _Splash(); @override State<_Splash> createState() => _SplashState(); }
 class _SplashState extends State<_Splash> {
-  @override void initState() { super.initState(); Future.delayed(const Duration(milliseconds: 900), () { if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _Welcome())); }); }
+  @override void initState() { super.initState(); _route(); }
+  Future<void> _route() async {
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    if (OpenBackend.instance.isAuthenticated) {
+      try {
+        final complete = await OpenBackend.instance.hasCompletedProfile();
+        if (!mounted) return;
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => complete ? const RealAppShell() : const _ProfileScreen()));
+        return;
+      } catch (_) {}
+    }
+    if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _Welcome()));
+  }
   @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [ui.AppSvg(ui.AppIcons.splash, size: 118, card: true), SizedBox(height: 26), Text('Open', style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900))])));
 }
 
 class _Welcome extends StatelessWidget {
   const _Welcome();
-  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Padding(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Spacer(), const ui.AppSvg(ui.AppIcons.splash, size: 90, card: true), const SizedBox(height: 28), const Text('Open', style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900)), const SizedBox(height: 18), const Text('Kaydırma.\nÖnce kilidimi aç.', style: TextStyle(fontSize: 31, height: 1.08, fontWeight: FontWeight.w800)), const Spacer(), FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _Onboarding())), child: const Text('Başlayalım'))]))));
+  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Padding(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Spacer(), const ui.AppSvg(ui.AppIcons.splash, size: 90, card: true), const SizedBox(height: 28), const Text('Open', style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900)), const SizedBox(height: 18), const Text('Kaydırma.\nÖnce kilidimi aç.', style: TextStyle(fontSize: 31, height: 1.08, fontWeight: FontWeight.w800)), const Spacer(), FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _Onboarding())), child: const Text('Kayıt ol')), const SizedBox(height: 10), TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _LoginScreen())), child: const Center(child: Text('Zaten hesabın var mı? Giriş yap', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800))))]))));
+}
+
+class _LoginScreen extends StatefulWidget { const _LoginScreen(); @override State<_LoginScreen> createState() => _LoginScreenState(); }
+class _LoginScreenState extends State<_LoginScreen> {
+  final email = TextEditingController(); final password = TextEditingController(); bool busy = false; String? error;
+  Future<void> login() async { if (email.text.trim().isEmpty || password.text.length < 6) { setState(() => error = 'E-posta ve en az 6 karakter şifre gir.'); return; } setState(() { busy = true; error = null; }); try { await OpenBackend.instance.loginEmail(email.text, password.text); if (!mounted) return; await _continueAfterAuth(context); } catch (_) { if (mounted) setState(() => error = 'E-posta veya şifre hatalı.'); } finally { if (mounted) setState(() => busy = false); } }
+  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.all(26), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.PageTitle('Tekrar hoş geldin.', 'Hesabına giriş yap ve kaldığın yerden devam et.'), const SizedBox(height: 26), TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')), const SizedBox(height: 12), TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre')), if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))), const Spacer(), FilledButton(onPressed: busy ? null : login, child: Text(busy ? 'Giriş yapılıyor...' : 'Giriş yap'))]))));
 }
 
 class _Onboarding extends StatefulWidget { const _Onboarding(); @override State<_Onboarding> createState() => _OnboardingState(); }
 class _OnboardingState extends State<_Onboarding> {
   final controller = PageController(); int page = 0;
   final pages = const [('Profil değil,\ninsanı keşfet.', 'Önce soruları cevapla, sonra karar ver.', ui.AppIcons.lock), ('3 kilit soru,\nyüzlerce olasılık.', 'Merak uyandıran sorularla daha anlamlı sohbetler.', ui.AppIcons.question), ('Doğru kişiyle\nanahtarın uyusun.', 'Anahtarını gönder. Kabul edilirse profil açılır.', ui.AppIcons.key), ('Gerçek bağlantılar\nburada başlar.', 'Daha az yüzeysel, daha çok sen.', ui.AppIcons.unlock)];
-  void next() { if (page < pages.length - 1) { controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic); } else { Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _ContactChoice())); } }
-  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Column(children: [Align(alignment: Alignment.centerRight, child: Padding(padding: const EdgeInsets.only(right: 18, top: 4), child: TextButton(onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _ContactChoice())), child: const Text('Atla', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800))))), Expanded(child: PageView.builder(controller: controller, itemCount: pages.length, onPageChanged: (v) => setState(() => page = v), itemBuilder: (_, i) { final item = pages[i]; return Padding(padding: const EdgeInsets.fromLTRB(28, 6, 28, 24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: Center(child: ui.AppSvg(item.$3, size: 150, card: true))), Text(item.$1, style: const TextStyle(fontSize: 34, height: 1.05, fontWeight: FontWeight.w900)), const SizedBox(height: 12), Text(item.$2, style: const TextStyle(color: ui.OpenApp.muted, fontSize: 16, height: 1.4)), const SizedBox(height: 20), FilledButton(onPressed: next, child: Text(i == pages.length - 1 ? 'Hadi başlayalım' : 'Devam et'))])); }))])));
+  void next() { if (page < pages.length - 1) { controller.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeOutCubic); } else { Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _RegisterScreen())); } }
+  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Column(children: [Align(alignment: Alignment.centerRight, child: Padding(padding: const EdgeInsets.only(right: 18, top: 4), child: TextButton(onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _RegisterScreen())), child: const Text('Atla', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800))))), Expanded(child: PageView.builder(controller: controller, itemCount: pages.length, onPageChanged: (v) => setState(() => page = v), itemBuilder: (_, i) { final item = pages[i]; return Padding(padding: const EdgeInsets.fromLTRB(28, 6, 28, 24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: Center(child: ui.AppSvg(item.$3, size: 150, card: true))), Text(item.$1, style: const TextStyle(fontSize: 34, height: 1.05, fontWeight: FontWeight.w900)), const SizedBox(height: 12), Text(item.$2, style: const TextStyle(color: ui.OpenApp.muted, fontSize: 16, height: 1.4)), const SizedBox(height: 20), FilledButton(onPressed: next, child: Text(i == pages.length - 1 ? 'Hadi başlayalım' : 'Devam et'))])); }))])));
 }
 
-class _ContactChoice extends StatelessWidget {
-  const _ContactChoice();
-  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Padding(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Spacer(), const ui.AppSvg(ui.AppIcons.splash, size: 82, card: true), const SizedBox(height: 26), const Text('Open', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900)), const SizedBox(height: 12), const Text('Nasıl devam etmek istersin?', style: TextStyle(fontSize: 18, color: ui.OpenApp.muted)), const Spacer(), FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _PhoneInput())), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [ui.AppSvg(ui.AppIcons.phone, size: 23), SizedBox(width: 10), Text('Telefon ile devam et')])), const SizedBox(height: 12), OutlinedButton(style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(58), shape: const StadiumBorder()), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _EmailInput())), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [ui.AppSvg(ui.AppIcons.mail, size: 23), SizedBox(width: 10), Text('E-posta ile devam et')]))]))));
-}
-
-class _PhoneInput extends StatefulWidget { const _PhoneInput(); @override State<_PhoneInput> createState() => _PhoneInputState(); }
-class _PhoneInputState extends State<_PhoneInput> {
-  final phone = TextEditingController(); bool busy = false; String? error;
-  Future<void> next() async { final digits = phone.text.replaceAll(RegExp(r'\D'), ''); if (digits.length < 10) { setState(() => error = 'Geçerli bir telefon numarası gir.'); return; } setState(() { busy = true; error = null; }); try { await _openAnonymousSession(context); } catch (e) { if (mounted) setState(() => error = 'Devam edilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(26, 12, 26, 28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.AppSvg(ui.AppIcons.phone, size: 76, card: true), const SizedBox(height: 26), const ui.PageTitle('Telefon numaranı gir.', 'Doğrulama kodu istemeden doğrudan devam edeceksin.'), const SizedBox(height: 28), TextField(controller: phone, keyboardType: TextInputType.phone, autofocus: true, inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]'))], decoration: InputDecoration(prefixText: '+90  ', labelText: 'Telefon numarası', hintText: '5XX XXX XX XX', errorText: error)), const Spacer(), FilledButton(onPressed: busy ? null : next, child: Text(busy ? 'Hazırlanıyor...' : 'Devam et'))]))));
-}
-
-class _EmailInput extends StatefulWidget { const _EmailInput(); @override State<_EmailInput> createState() => _EmailInputState(); }
-class _EmailInputState extends State<_EmailInput> {
-  final email = TextEditingController(); bool busy = false; String? error;
-  Future<void> next() async { if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.text.trim())) { setState(() => error = 'Geçerli bir e-posta adresi gir.'); return; } setState(() { busy = true; error = null; }); try { await _openAnonymousSession(context); } catch (e) { if (mounted) setState(() => error = 'Devam edilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(26, 12, 26, 28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.AppSvg(ui.AppIcons.mail, size: 76, card: true), const SizedBox(height: 26), const ui.PageTitle('E-posta adresini gir.', 'Şifre veya e-posta doğrulaması istemeden devam edeceksin.'), const SizedBox(height: 28), TextField(controller: email, keyboardType: TextInputType.emailAddress, autofocus: true, decoration: InputDecoration(labelText: 'E-posta', hintText: 'ornek@mail.com', errorText: error)), const Spacer(), FilledButton(onPressed: busy ? null : next, child: Text(busy ? 'Hazırlanıyor...' : 'Devam et'))]))));
+class _RegisterScreen extends StatefulWidget { const _RegisterScreen(); @override State<_RegisterScreen> createState() => _RegisterScreenState(); }
+class _RegisterScreenState extends State<_RegisterScreen> {
+  final email = TextEditingController(); final password = TextEditingController(); bool busy = false; String? error;
+  Future<void> register() async { if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.text.trim()) || password.text.length < 6) { setState(() => error = 'Geçerli e-posta ve en az 6 karakter şifre gir.'); return; } setState(() { busy = true; error = null; }); try { final result = await OpenBackend.instance.registerEmail(email.text, password.text); if (result.session == null) { if (mounted) setState(() => error = 'E-posta doğrulaması açık. Supabase ayarından kapatılmalı.'); return; } if (!mounted) return; Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const _ProfileScreen()), (_) => false); } catch (e) { if (mounted) setState(() => error = 'Kayıt oluşturulamadı: $e'); } finally { if (mounted) setState(() => busy = false); } }
+  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.all(26), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.PageTitle('Hesabını oluştur.', 'E-posta ve şifrenle daha sonra tekrar giriş yapabilirsin.'), const SizedBox(height: 26), TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')), const SizedBox(height: 12), TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre', helperText: 'En az 6 karakter')), if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))), const Spacer(), FilledButton(onPressed: busy ? null : register, child: Text(busy ? 'Hesap oluşturuluyor...' : 'Kayıt ol'))]))));
 }
 
 class _ProfileScreen extends StatefulWidget { const _ProfileScreen(); @override State<_ProfileScreen> createState() => _ProfileScreenState(); }
