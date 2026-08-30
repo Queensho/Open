@@ -163,7 +163,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) => Scaffold(
         body: SafeArea(
@@ -299,7 +298,6 @@ class PhoneLoginScreen extends StatefulWidget {
 class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   final phone = TextEditingController();
   String? error;
-
   void sendCode() {
     final digits = phone.text.replaceAll(RegExp(r'\D'), '');
     if (digits.length < 10) {
@@ -350,7 +348,6 @@ class OtpScreen extends StatefulWidget {
 class _OtpScreenState extends State<OtpScreen> {
   final code = TextEditingController();
   String? error;
-
   void verify() {
     if (code.text.trim() != '123456') {
       setState(() => error = 'Kod hatalı. Test kodu: 123456');
@@ -425,7 +422,6 @@ class CreateProfileScreen extends StatefulWidget {
 
 class _CreateProfileScreenState extends State<CreateProfileScreen> {
   String gender = 'Kadın';
-
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(backgroundColor: Colors.transparent),
@@ -452,9 +448,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                 const SizedBox(height: 18),
                 Wrap(
                   spacing: 8,
-                  children: ['Kadın', 'Erkek', 'Belirtmek istemiyorum']
-                      .map((item) => ChoiceChip(label: Text(item), selected: gender == item, selectedColor: OpenApp.lime, onSelected: (_) => setState(() => gender = item)))
-                      .toList(),
+                  children: ['Kadın', 'Erkek', 'Belirtmek istemiyorum'].map((item) => ChoiceChip(label: Text(item), selected: gender == item, selectedColor: OpenApp.lime, onSelected: (_) => setState(() => gender = item))).toList(),
                 ),
                 const SizedBox(height: 24),
                 FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LockQuestionsScreen())), child: const Text('Kilit sorularına geç')),
@@ -481,7 +475,6 @@ class _LockQuestionsScreenState extends State<LockQuestionsScreen> {
     'Bir şarkı seni hangi ana götürür?',
     'İlk buluşmada en çok neye dikkat edersin?',
   ];
-
   void toggle(int i) {
     setState(() {
       if (selected.contains(i)) {
@@ -551,30 +544,45 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) => Scaffold(
         body: screens[index],
-        bottomNavigationBar: NavigationBar(
-          backgroundColor: Colors.white,
-          indicatorColor: OpenApp.lime.withValues(alpha: .25),
-          selectedIndex: index,
-          onDestinationSelected: (value) => setState(() => index = value),
-          destinations: [
-            NavigationDestination(icon: AppSvg(index == 0 ? AppIcons.navHomeActive : AppIcons.navHome, size: 25), label: 'Keşfet'),
-            NavigationDestination(icon: AppSvg(index == 1 ? AppIcons.navKeyActive : AppIcons.navKey, size: 25), label: 'Anahtarlar'),
-            NavigationDestination(icon: AppSvg(index == 2 ? AppIcons.navMessagesActive : AppIcons.navMessages, size: 25), label: 'Mesajlar'),
-            NavigationDestination(icon: AppSvg(index == 3 ? AppIcons.navProfileActive : AppIcons.navProfile, size: 25), label: 'Profil'),
-          ],
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(18, 4, 18, 10),
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: const Color(0xFFF0F0F0)),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .08), blurRadius: 24, offset: const Offset(0, 10))],
+            ),
+            child: NavigationBar(
+              height: 66,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              indicatorColor: OpenApp.lime.withValues(alpha: .16),
+              selectedIndex: index,
+              onDestinationSelected: (value) => setState(() => index = value),
+              destinations: [
+                NavigationDestination(icon: AppSvg(index == 0 ? AppIcons.navHomeActive : AppIcons.navHome, size: 24), label: 'Keşfet'),
+                NavigationDestination(icon: AppSvg(index == 1 ? AppIcons.navKeyActive : AppIcons.navKey, size: 24), label: 'Anahtarlar'),
+                NavigationDestination(icon: AppSvg(index == 2 ? AppIcons.navMessagesActive : AppIcons.navMessages, size: 24), label: 'Mesajlar'),
+                NavigationDestination(icon: AppSvg(index == 3 ? AppIcons.navProfileActive : AppIcons.navProfile, size: 24), label: 'Profil'),
+              ],
+            ),
+          ),
         ),
       );
 }
 
 class LockedProfile {
-  const LockedProfile({required this.name, required this.age, required this.location, required this.distance, required this.bio, required this.questions, required this.color, required this.interests});
+  const LockedProfile({required this.name, required this.age, required this.location, required this.distance, required this.bio, required this.questions, required this.photo, required this.interests});
   final String name;
   final int age;
   final String location;
   final String distance;
   final String bio;
   final List<String> questions;
-  final Color color;
+  final String photo;
   final List<String> interests;
 }
 
@@ -587,24 +595,24 @@ class DiscoverScreen extends StatefulWidget {
 class _DiscoverScreenState extends State<DiscoverScreen> {
   final profiles = const [
     LockedProfile(
-      name: 'Deniz',
-      age: 27,
+      name: 'Ece',
+      age: 24,
       location: 'Kadıköy',
-      distance: '2,4 km',
-      bio: 'Kahve, sahil ve uzun yürüyüşler.',
-      questions: ['Bir pazar sabahı seni nerede bulurum?', 'Seni güldüren küçük şey ne?', 'Plansız bir günün nasıl geçer?'],
-      color: Color(0xFFFFA8B8),
-      interests: ['Müzik', 'Seyahat', 'Kahve'],
+      distance: '2 km',
+      bio: 'Konser, fotoğraf ve spontane şehir kaçamakları.',
+      questions: ['Son anda aldığın en güzel karar neydi?', 'Bir şarkı seni hangi ana götürür?', 'İlk buluşmada en çok neye dikkat edersin?'],
+      photo: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=85',
+      interests: ['Müzik', 'Seyahat', 'Fotoğrafçılık'],
     ),
     LockedProfile(
-      name: 'Ece',
-      age: 25,
+      name: 'Deniz',
+      age: 27,
       location: 'Beşiktaş',
       distance: '4,1 km',
-      bio: 'Konser, analog fotoğraf ve yeni şehirler.',
-      questions: ['Son anda aldığın en güzel karar neydi?', 'Bir şarkı seni hangi ana götürür?', 'İlk buluşmada en çok neye dikkat edersin?'],
-      color: Color(0xFF8F6BD8),
-      interests: ['Fotoğraf', 'Konser', 'Tasarım'],
+      bio: 'Kahve, sahil ve uzun yürüyüşler.',
+      questions: ['Bir pazar sabahı seni nerede bulurum?', 'Seni güldüren küçük şey ne?', 'Plansız bir günün nasıl geçer?'],
+      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=85',
+      interests: ['Kahve', 'Gezi', 'Müzik'],
     ),
     LockedProfile(
       name: 'Selin',
@@ -613,14 +621,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       distance: '6,8 km',
       bio: 'İyi yemek, kötü espriler ve spontane planlar.',
       questions: ['Hafta sonu senin için mükemmel nasıl geçer?', 'Birine hemen güvenmeni sağlayan şey?', 'Seni gerçekten heyecanlandıran şey ne?'],
-      color: Color(0xFFFFBE18),
+      photo: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=85',
       interests: ['Yemek', 'Sinema', 'Gezi'],
     ),
   ];
 
   int profileIndex = 0;
   LockedProfile get profile => profiles[profileIndex];
-
   void move(int delta) => setState(() => profileIndex = (profileIndex + delta + profiles.length) % profiles.length);
 
   @override
@@ -628,32 +635,44 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxHeight < 700;
-          final cardHeight = (constraints.maxHeight * (compact ? .48 : .53)).clamp(330.0, 520.0);
+          final cardHeight = (constraints.maxHeight * .57).clamp(390.0, 570.0).toDouble();
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+            padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _discoverHeader(),
-                const SizedBox(height: 18),
-                _discoverTabs(),
-                const SizedBox(height: 24),
+                _header(),
+                const SizedBox(height: 28),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Expanded(child: Text('Sana uygun yeni insanları keşfet 💚', style: TextStyle(fontSize: 22, height: 1.1, fontWeight: FontWeight.w900, letterSpacing: -.4))),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [Text('Keşfet', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: -.8)), SizedBox(width: 8), Icon(Icons.auto_awesome_rounded, color: OpenApp.lime, size: 25)]),
+                          SizedBox(height: 6),
+                          Text('Sana uygun insanları keşfet', style: TextStyle(fontSize: 16, color: Color(0xFFAAAAAA), fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
                     _filterButton(),
                   ],
                 ),
-                const SizedBox(height: 18),
-                SizedBox(height: cardHeight, child: _profileStack(cardHeight)),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
+                SizedBox(height: cardHeight, child: _profileDeck()),
+                const SizedBox(height: 22),
                 _actions(),
-                const SizedBox(height: 10),
-                const Center(child: Text('Anahtarla kilidi aç', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),
-                const SizedBox(height: 3),
-                const Center(child: Text('3 soruyla birbirinizi daha iyi tanıyın', style: TextStyle(color: OpenApp.muted, fontWeight: FontWeight.w600))),
+                const SizedBox(height: 14),
+                const Center(child: Text('Anahtarla kilidi aç', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+                const SizedBox(height: 4),
+                const Center(
+                  child: Text.rich(
+                    TextSpan(children: [TextSpan(text: '3', style: TextStyle(color: OpenApp.lime, fontWeight: FontWeight.w900)), TextSpan(text: ' soruyla birbirinizi daha iyi tanıyın')]),
+                    style: TextStyle(color: OpenApp.muted, fontSize: 13.5, fontWeight: FontWeight.w600),
+                  ),
+                ),
               ],
             ),
           );
@@ -662,164 +681,77 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
-  Widget _discoverHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 58,
-          height: 58,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF91F3C8), Color(0xFF8CD7FF)]),
-            borderRadius: BorderRadius.circular(19),
-          ),
-          child: const AppSvg(AppIcons.profile, size: 42),
-        ),
-        const SizedBox(width: 14),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _header() => Row(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              Text('Merhaba 👋', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
-              SizedBox(height: 2),
-              Row(children: [Icon(Icons.location_on_rounded, size: 17, color: OpenApp.purple), SizedBox(width: 3), Text('İstanbul', style: TextStyle(color: OpenApp.purple, fontWeight: FontWeight.w800))]),
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(19),
+                  image: const DecorationImage(
+                    image: NetworkImage('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const Positioned(right: -1, bottom: -1, child: CircleAvatar(radius: 7, backgroundColor: Colors.white, child: CircleAvatar(radius: 5, backgroundColor: OpenApp.lime))),
             ],
           ),
-        ),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(width: 48, height: 48, decoration: BoxDecoration(color: OpenApp.soft, borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.notifications_none_rounded, size: 28)),
-            const Positioned(right: 6, top: 5, child: CircleAvatar(radius: 5, backgroundColor: Color(0xFFFF4C68))),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _discoverTabs() {
-    const items = [
-      (Icons.explore_rounded, 'Keşfet', 0),
-      (Icons.favorite_border_rounded, 'Beğenenler', 12),
-      (Icons.chat_bubble_outline_rounded, 'Eşleşmeler', 3),
-    ];
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 9),
-        itemBuilder: (_, i) {
-          final item = items[i];
-          final active = i == 0;
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            decoration: BoxDecoration(
-              gradient: active ? const LinearGradient(colors: [Color(0xFF8F54FF), Color(0xFF6946F5)]) : null,
-              color: active ? null : Colors.white,
-              borderRadius: BorderRadius.circular(17),
-              border: Border.all(color: active ? Colors.transparent : const Color(0xFFE8E8EE)),
-              boxShadow: active ? [BoxShadow(color: OpenApp.purple.withValues(alpha: .22), blurRadius: 18, offset: const Offset(0, 7))] : null,
-            ),
-            child: Row(
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(item.$1, size: 20, color: active ? Colors.white : OpenApp.muted),
-                const SizedBox(width: 7),
-                Text(item.$2, style: TextStyle(color: active ? Colors.white : OpenApp.ink, fontWeight: FontWeight.w800)),
-                if (item.$3 > 0) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: const Color(0xFFFF5D72), borderRadius: BorderRadius.circular(99)),
-                    child: Text('${item.$3}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
-                  ),
-                ],
+                Text('Merhaba 👋', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                SizedBox(height: 3),
+                Row(children: [Icon(Icons.location_on_rounded, size: 17, color: OpenApp.muted), SizedBox(width: 3), Text('İstanbul, Türkiye', style: TextStyle(color: OpenApp.muted, fontWeight: FontWeight.w700))]),
               ],
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _filterButton() => Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: const Color(0xFFE8E8EE))),
-        child: const Icon(Icons.tune_rounded),
+          ),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 16, offset: Offset(0, 7))]), child: const Icon(Icons.notifications_none_rounded, size: 27)),
+              const Positioned(right: 2, top: 1, child: CircleAvatar(radius: 6, backgroundColor: Colors.white, child: CircleAvatar(radius: 4, backgroundColor: OpenApp.lime))),
+            ],
+          ),
+        ],
       );
 
-  Widget _profileStack(double cardHeight) {
+  Widget _filterButton() => Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .08), blurRadius: 20, offset: const Offset(0, 9))]),
+        child: const Icon(Icons.tune_rounded, size: 27),
+      );
+
+  Widget _profileDeck() {
     final next = profiles[(profileIndex + 1) % profiles.length];
     final after = profiles[(profileIndex + 2) % profiles.length];
     return Stack(
       alignment: Alignment.center,
       clipBehavior: Clip.none,
       children: [
-        Positioned(top: 18, left: 52, right: 8, bottom: 42, child: Transform.rotate(angle: .05, child: _backCard(after.color))),
-        Positioned(top: 30, left: 24, right: 34, bottom: 26, child: Transform.rotate(angle: -.045, child: _backCard(next.color))),
+        Positioned(left: 4, right: 48, top: 34, bottom: 22, child: Transform.rotate(angle: -.025, child: _backPhoto(next.photo))),
+        Positioned(left: 48, right: 4, top: 34, bottom: 22, child: Transform.rotate(angle: .025, child: _backPhoto(after.photo))),
         Positioned.fill(
-          top: 42,
+          left: 26,
+          right: 26,
           child: GestureDetector(
             onHorizontalDragEnd: (details) {
               final velocity = details.primaryVelocity ?? 0;
-              if (velocity < 0) move(1);
-              if (velocity > 0) move(-1);
+              if (velocity < 0) {
+                move(1);
+              } else if (velocity > 0) {
+                move(-1);
+              }
             },
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 260),
-              child: Container(
-                key: ValueKey(profileIndex),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [profile.color, Color.lerp(profile.color, Colors.white, .24)!]),
-                  borderRadius: BorderRadius.circular(52),
-                  border: Border.all(color: Colors.white, width: 3),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .16), blurRadius: 32, offset: const Offset(0, 16))],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Positioned(top: 22, left: 20, child: _onlineChip()),
-                      Positioned(top: 18, right: 18, child: Container(width: 44, height: 44, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle), child: const Icon(Icons.auto_awesome_rounded, size: 22))),
-                      Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const AppSvg(AppIcons.lock, size: 112, card: true),
-                            const SizedBox(height: 14),
-                            const Text('Profil kilitli', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                            const SizedBox(height: 6),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 34), child: Text(profile.bio, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
-                          ],
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(22, 36, 22, 18),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withValues(alpha: .72)]),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(children: [Flexible(child: Text('${profile.name}, ${profile.age}', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900))), const SizedBox(width: 7), const Icon(Icons.verified_rounded, color: Color(0xFF58A5FF), size: 24)]),
-                              const SizedBox(height: 5),
-                              Row(children: [const Icon(Icons.location_on_rounded, color: Colors.white70, size: 18), const SizedBox(width: 3), Text(profile.location, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)), const SizedBox(width: 9), _distanceChip(profile.distance)]),
-                              const SizedBox(height: 11),
-                              Wrap(spacing: 7, runSpacing: 7, children: profile.interests.map(_interestChip).toList()),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              child: _frontCard(profile),
             ),
           ),
         ),
@@ -827,40 +759,84 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     );
   }
 
-  Widget _backCard(Color color) => Container(
+  Widget _backPhoto(String url) => ClipRRect(
+        borderRadius: BorderRadius.circular(44),
+        child: Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: const Color(0xFFEAEAEA))),
+      );
+
+  Widget _frontCard(LockedProfile item) => Container(
+        key: ValueKey(profileIndex),
         decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [color, Color.lerp(color, Colors.white, .24)!]),
-          borderRadius: BorderRadius.circular(50),
-          boxShadow: [BoxShadow(color: color.withValues(alpha: .25), blurRadius: 20, offset: const Offset(0, 10))],
+          borderRadius: BorderRadius.circular(48),
+          border: Border.all(color: Colors.white, width: 3),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .18), blurRadius: 30, offset: const Offset(0, 14))],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(46),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(item.photo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: const Color(0xFFEAEAEA), child: const Center(child: AppSvg(AppIcons.profile, size: 110)))),
+              Positioned(top: 22, left: 20, child: _onlineChip()),
+              Positioned(
+                top: 18,
+                right: 18,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: OpenApp.lime, width: 1.5)),
+                  child: const Icon(Icons.auto_awesome_rounded, size: 22, color: OpenApp.ink),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(24, 80, 24, 22),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withValues(alpha: .88)]),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [Flexible(child: Text('${item.name}, ${item.age}', style: const TextStyle(color: Colors.white, fontSize: 31, fontWeight: FontWeight.w900))), const SizedBox(width: 7), const Icon(Icons.verified_rounded, color: OpenApp.lime, size: 23)]),
+                      const SizedBox(height: 8),
+                      Row(children: [const Icon(Icons.location_on_rounded, color: OpenApp.lime, size: 20), const SizedBox(width: 4), Text('${item.distance} uzakta', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700))]),
+                      const SizedBox(height: 14),
+                      Wrap(spacing: 8, runSpacing: 8, children: item.interests.map(_interestChip).toList()),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
 
   Widget _onlineChip() => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: .88), borderRadius: BorderRadius.circular(99)),
-        child: const Row(mainAxisSize: MainAxisSize.min, children: [CircleAvatar(radius: 4, backgroundColor: Color(0xFF60E15A)), SizedBox(width: 7), Text('Çevrimiçi', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800))]),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: .45), borderRadius: BorderRadius.circular(99), border: Border.all(color: Colors.white24)),
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [CircleAvatar(radius: 4, backgroundColor: OpenApp.lime), SizedBox(width: 8), Text('Çevrimiçi', style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800))]),
       );
 
-  Widget _distanceChip(String distance) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(color: OpenApp.purple.withValues(alpha: .76), borderRadius: BorderRadius.circular(99)),
-        child: Text('$distance uzakta', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
-      );
-
-  Widget _interestChip(String text) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: .18), borderRadius: BorderRadius.circular(99), border: Border.all(color: Colors.white24)),
-        child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
-      );
+  Widget _interestChip(String text) {
+    final icon = text.contains('Müzik') || text.contains('Konser') ? Icons.music_note_rounded : text.contains('Seyahat') || text.contains('Gezi') ? Icons.flight_rounded : text.contains('Fotoğraf') ? Icons.photo_camera_rounded : text.contains('Kahve') ? Icons.local_cafe_rounded : text.contains('Yemek') ? Icons.restaurant_rounded : Icons.local_activity_rounded;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: .52), borderRadius: BorderRadius.circular(99), border: Border.all(color: Colors.white12)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: OpenApp.lime, size: 17), const SizedBox(width: 6), Text(text, style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800))]),
+    );
+  }
 
   Widget _actions() => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _RoundAction(color: Colors.white, icon: Icons.close_rounded, iconColor: OpenApp.coral, onTap: () => move(1)),
-          const SizedBox(width: 18),
-          _RoundAction(color: OpenApp.lime, size: 84, glow: true, onTap: () => _showQuestions(context), child: const AppSvg(AppIcons.key, size: 38)),
-          const SizedBox(width: 18),
-          _RoundAction(color: Colors.white, icon: Icons.favorite_rounded, iconColor: OpenApp.purple, onTap: () => move(1)),
+          _RoundAction(color: Colors.white, icon: Icons.close_rounded, iconColor: OpenApp.ink, onTap: () => move(1)),
+          const SizedBox(width: 26),
+          _RoundAction(color: OpenApp.lime, size: 88, glow: true, onTap: () => _showQuestions(context), child: const AppSvg(AppIcons.key, size: 42)),
+          const SizedBox(width: 26),
+          _RoundAction(color: Colors.white, icon: Icons.favorite_border_rounded, iconColor: OpenApp.ink, onTap: () => move(1)),
         ],
       );
 
@@ -920,9 +896,7 @@ class _RoundAction extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(color: glow ? OpenApp.lime.withValues(alpha: .42) : Colors.black.withValues(alpha: .10), blurRadius: glow ? 28 : 14, spreadRadius: glow ? 5 : 0, offset: const Offset(0, 8)),
-          ],
+          boxShadow: [BoxShadow(color: glow ? OpenApp.lime.withValues(alpha: .40) : Colors.black.withValues(alpha: .10), blurRadius: glow ? 30 : 16, spreadRadius: glow ? 5 : 0, offset: const Offset(0, 8))],
         ),
         child: Material(
           color: color,
@@ -946,7 +920,6 @@ class AnswerScreen extends StatefulWidget {
 
 class _AnswerScreenState extends State<AnswerScreen> {
   final answer = TextEditingController();
-
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(backgroundColor: Colors.transparent),
@@ -978,7 +951,6 @@ class _AnswerScreenState extends State<AnswerScreen> {
 class KeySentScreen extends StatelessWidget {
   const KeySentScreen({super.key, required this.name});
   final String name;
-
   @override
   Widget build(BuildContext context) => Scaffold(
         body: SafeArea(
@@ -1039,7 +1011,6 @@ class KeysScreen extends StatelessWidget {
 class MatchScreen extends StatelessWidget {
   const MatchScreen({super.key, required this.name});
   final String name;
-
   @override
   Widget build(BuildContext context) => Scaffold(
         body: SafeArea(
@@ -1103,7 +1074,6 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final input = TextEditingController();
   final messages = <String>[];
-
   void send() {
     final value = input.text.trim();
     if (value.isEmpty) return;
