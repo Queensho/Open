@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'main.dart' as legacy;
+import 'legacy_connected_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,5 +11,5 @@ Future<void> main() async {
     publishableKey: 'sb_publishable_XjKr2o2fUIEz9mxaIPHHSg_0wKSDhjk',
   );
 
-  runApp(const legacy.OpenApp());
+  runApp(const LegacyConnectedApp());
 }
