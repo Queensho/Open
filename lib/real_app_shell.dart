@@ -4,7 +4,8 @@ import 'data/open_backend.dart';
 import 'main.dart' as ui;
 
 class RealAppShell extends StatefulWidget {
-  const RealAppShell({super.key});
+  const RealAppShell({super.key, this.onSignedOut});
+  final VoidCallback? onSignedOut;
   @override
   State<RealAppShell> createState() => _RealAppShellState();
 }
@@ -18,7 +19,7 @@ class _RealAppShellState extends State<RealAppShell> {
       const RealDiscoverScreen(),
       const ui.KeysScreen(),
       const ui.MessagesScreen(),
-      const ui.MyProfileScreen(),
+      _RealProfileScreen(onSignedOut: widget.onSignedOut),
     ];
     final icons = [
       [ui.AppIcons.navHome, ui.AppIcons.navHomeActive],
@@ -63,6 +64,75 @@ class _RealAppShellState extends State<RealAppShell> {
       ),
     );
   }
+}
+
+class _RealProfileScreen extends StatefulWidget {
+  const _RealProfileScreen({this.onSignedOut});
+  final VoidCallback? onSignedOut;
+  @override
+  State<_RealProfileScreen> createState() => _RealProfileScreenState();
+}
+
+class _RealProfileScreenState extends State<_RealProfileScreen> {
+  bool busy = false;
+
+  Future<void> signOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Çıkış yapılsın mı?'),
+        content: const Text('Hesabından çıkış yapacaksın. Tekrar giriş yapmak için e-posta ve şifreni kullanabilirsin.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Çıkış yap')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => busy = true);
+    try {
+      await OpenBackend.instance.signOut();
+      if (!mounted) return;
+      widget.onSignedOut?.call();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Çıkış yapılamadı: $e')));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const ui.PageTitle('Profilin', 'Kilit sorularını ve profilini buradan yönet.'),
+              const SizedBox(height: 28),
+              const ui.AppSvg(ui.AppIcons.profile, size: 110, card: true),
+              const SizedBox(height: 18),
+              const Text('Profil hazır', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+              const Text('3 kilit sorusu aktif', style: TextStyle(color: ui.OpenApp.muted)),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: busy ? null : signOut,
+                  icon: const Icon(Icons.logout_rounded),
+                  label: Text(busy ? 'Çıkış yapılıyor...' : 'Çıkış yap'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red.shade700,
+                    side: BorderSide(color: Colors.red.shade100),
+                    minimumSize: const Size.fromHeight(56),
+                    shape: const StadiumBorder(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class RealDiscoverScreen extends StatefulWidget {
