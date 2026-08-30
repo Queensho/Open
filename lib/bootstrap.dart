@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'data/open_backend.dart';
 import 'direct_app.dart';
 import 'main.dart' as ui;
+import 'push_notifications.dart';
 import 'real_app_shell.dart';
 
 Future<void> main() async {
@@ -16,6 +17,7 @@ Future<void> main() async {
 
   final backend = OpenBackend.instance;
   if (backend.isAuthenticated && await backend.hasCompletedProfile()) {
+    await PushNotifications.instance.start();
     runApp(const _ReturningUserApp());
   } else {
     runApp(const DirectOpenApp());
