@@ -14,19 +14,28 @@ class OpenBackend {
   Future<AuthResponse> loginEmail(String email, String password) =>
       client.auth.signInWithPassword(email: email.trim(), password: password);
 
+  Future<AuthResponse> startMockPhoneSession() => client.auth.signInAnonymously();
+
   Future<void> saveProfile(String name, String city, String gender) async {
+    final cleanName = name.trim();
+    final cleanCity = city.trim();
+    if (cleanName.isEmpty || cleanCity.isEmpty) {
+      throw ArgumentError('Ad ve konum zorunlu');
+    }
     final id = _uid();
     await client.from('profiles').upsert({
       'id': id,
-      'display_name': name.trim(),
-      'city': city.trim(),
+      'display_name': cleanName,
+      'city': cleanCity,
       'gender': gender,
     });
   }
 
   Future<void> saveLockQuestions(List<String> questions) async {
     final id = _uid();
-    if (questions.length != 3) throw ArgumentError('3 soru seçilmeli');
+    if (questions.length != 3 || questions.any((q) => q.trim().isEmpty)) {
+      throw ArgumentError('3 geçerli soru seçilmeli');
+    }
     await client.from('profile_questions').delete().eq('profile_id', id);
     await client.from('profile_questions').insert([
       for (var i = 0; i < questions.length; i++)
@@ -47,11 +56,13 @@ class OpenBackend {
   }
 
   Future<void> sendKey(String receiverId, String questionId, String answer) async {
+    final cleanAnswer = answer.trim();
+    if (cleanAnswer.isEmpty) throw ArgumentError('Cevap boş olamaz');
     await client.from('key_requests').insert({
       'sender_id': _uid(),
       'receiver_id': receiverId,
       'question_id': questionId,
-      'answer': answer.trim(),
+      'answer': cleanAnswer,
     });
   }
 
@@ -113,7 +124,7 @@ class OpenBackend {
 
   Future<void> sendMessage(String matchId, String text) async {
     final body = text.trim();
-    if (body.isEmpty) return;
+    if (body.isEmpty) throw ArgumentError('Mesaj boş olamaz');
     await client.from('messages').insert({
       'match_id': matchId,
       'sender_id': _uid(),
