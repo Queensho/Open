@@ -1,0 +1,19 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+class LocationSelection { const LocationSelection(this.country,this.state,this.district); final String country,state,district; String get label => [country,state,district].where((e)=>e.isNotEmpty).join(' · '); }
+
+class LocationPicker {
+  static const _base='https://countriesnow.space/api/v0.1/countries';
+  static Future<List<String>> _post(String path,Map<String,dynamic> body,String key)async{final r=await http.post(Uri.parse('$_base/$path'),headers:{'Content-Type':'application/json'},body:jsonEncode(body)).timeout(const Duration(seconds:15));if(r.statusCode<200||r.statusCode>=300)throw Exception('Konum servisine ulaşılamadı');final j=jsonDecode(r.body) as Map<String,dynamic>;final data=j['data'];dynamic raw;if(data is Map<String,dynamic>){raw=data[key];}else{raw=data;}if(raw is! List)return [];return raw.map((e)=>e is Map?(e['name']??'').toString():e.toString()).where((e)=>e.trim().isNotEmpty).toSet().toList()..sort();}
+  static Future<List<String>> countries()async{final r=await http.get(Uri.parse('$_base/positions')).timeout(const Duration(seconds:15));if(r.statusCode!=200)throw Exception('Ülkeler yüklenemedi');final j=jsonDecode(r.body) as Map<String,dynamic>;final d=(j['data'] as List? ?? const []);return d.map((e)=>(e as Map)['name'].toString()).toSet().toList()..sort();}
+  static Future<List<String>> states(String country)=>_post('states',{'country':country},'states');
+  static Future<List<String>> districts(String country,String state)=>_post('state/cities',{'country':country,'state':state},'data');
+
+  static Future<String?> _pick(BuildContext context,String title,Future<List<String>> future)async{return showModalBottomSheet<String>(context:context,isScrollControlled:true,showDragHandle:true,builder:(ctx)=>_PickerSheet(title:title,future:future));}
+  static Future<LocationSelection?> show(BuildContext context,{String country='',String state='',String district=''})async{final c=await _pick(context,'Ülke seç',countries());if(c==null||!context.mounted)return null;final s=await _pick(context,'İl / bölge seç',states(c));if(s==null||!context.mounted)return null;final d=await _pick(context,'İlçe / şehir seç',districts(c,s));if(d==null)return null;return LocationSelection(c,s,d);}
+}
+
+class _PickerSheet extends StatefulWidget{const _PickerSheet({required this.title,required this.future});final String title;final Future<List<String>> future;@override State<_PickerSheet> createState()=>_PickerSheetState();}
+class _PickerSheetState extends State<_PickerSheet>{String q='';@override Widget build(BuildContext context)=>SafeArea(child:SizedBox(height:MediaQuery.sizeOf(context).height*.72,child:Padding(padding:const EdgeInsets.fromLTRB(18,0,18,18),child:Column(children:[Text(widget.title,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w900)),const SizedBox(height:12),TextField(onChanged:(v)=>setState(()=>q=v.trim().toLowerCase()),decoration:const InputDecoration(prefixIcon:Icon(Icons.search_rounded),hintText:'Ara')),const SizedBox(height:10),Expanded(child:FutureBuilder<List<String>>(future:widget.future,builder:(context,s){if(s.connectionState!=ConnectionState.done)return const Center(child:CircularProgressIndicator());if(s.hasError)return Center(child:Text('Konumlar yüklenemedi.\n${s.error}',textAlign:TextAlign.center));final items=(s.data??[]).where((e)=>q.isEmpty||e.toLowerCase().contains(q)).toList();if(items.isEmpty)return const Center(child:Text('Sonuç bulunamadı'));return ListView.separated(itemCount:items.length,separatorBuilder:(_,__)=>const Divider(height:1),itemBuilder:(_,i)=>ListTile(title:Text(items[i],style:const TextStyle(fontWeight:FontWeight.w700)),trailing:const Icon(Icons.chevron_right_rounded),onTap:()=>Navigator.pop(context,items[i])));}))]))));}}
