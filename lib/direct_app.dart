@@ -8,35 +8,33 @@ class DirectOpenApp extends StatelessWidget {
   const DirectOpenApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Open',
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(seedColor: ui.OpenApp.lime),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: ui.OpenApp.soft,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: const BorderSide(color: ui.OpenApp.lime, width: 2)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            backgroundColor: ui.OpenApp.lime,
-            foregroundColor: ui.OpenApp.ink,
-            minimumSize: const Size.fromHeight(58),
-            shape: const StadiumBorder(),
-            textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+  Widget build(BuildContext context) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Open',
+        theme: ThemeData(
+          useMaterial3: true,
+          scaffoldBackgroundColor: Colors.white,
+          colorScheme: ColorScheme.fromSeed(seedColor: ui.OpenApp.lime),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: ui.OpenApp.soft,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: const BorderSide(color: ui.OpenApp.lime, width: 2)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
+          ),
+          filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+              backgroundColor: ui.OpenApp.lime,
+              foregroundColor: ui.OpenApp.ink,
+              minimumSize: const Size.fromHeight(58),
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
           ),
         ),
-      ),
-      home: const _Splash(),
-    );
-  }
+        home: const _Splash(),
+      );
 }
 
 Widget _appShell() => Builder(
@@ -56,6 +54,13 @@ Future<void> _continueAfterAuth(BuildContext context) async {
     MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen()),
     (_) => false,
   );
+}
+
+String _normalizePhone(String value) {
+  var p = value.replaceAll(RegExp(r'\D'), '');
+  if (p.startsWith('0')) p = p.substring(1);
+  if (!p.startsWith('90')) p = '90$p';
+  return '+$p';
 }
 
 class _Splash extends StatefulWidget {
@@ -87,17 +92,12 @@ class _SplashState extends State<_Splash> {
       try {
         final complete = await OpenBackend.instance.hasCompletedProfile();
         if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen()),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => complete ? _appShell() : const _ProfileScreen()));
         return;
       } catch (_) {}
     }
 
-    if (mounted) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _Welcome()));
-    }
+    if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const _Welcome()));
   }
 
   @override
@@ -119,38 +119,34 @@ class _Welcome extends StatelessWidget {
   const _Welcome();
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Spacer(),
-              const ui.AppSvg(ui.AppIcons.splash, size: 90, card: true),
-              const SizedBox(height: 28),
-              const Text('Open', style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 18),
-              const Text('Kaydırma.\nÖnce kilidimi aç.', style: TextStyle(fontSize: 31, height: 1.08, fontWeight: FontWeight.w800)),
-              const Spacer(),
-              FilledButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _Onboarding())),
-                child: const Text('Kayıt ol'),
-              ),
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _LoginScreen())),
-                child: const Center(
-                  child: Text('Zaten hesabın var mı? Giriş yap', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800)),
+  Widget build(BuildContext context) => Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Spacer(),
+                const ui.AppSvg(ui.AppIcons.splash, size: 90, card: true),
+                const SizedBox(height: 28),
+                const Text('Open', style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 18),
+                const Text('Kaydırma.\nÖnce kilidimi aç.', style: TextStyle(fontSize: 31, height: 1.08, fontWeight: FontWeight.w800)),
+                const Spacer(),
+                FilledButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _Onboarding())),
+                  child: const Text('Kayıt ol'),
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _LoginScreen())),
+                  child: const Center(child: Text('Zaten hesabın var mı? Giriş yap', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800))),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 class _LoginScreen extends StatefulWidget {
@@ -166,13 +162,6 @@ class _LoginScreenState extends State<_LoginScreen> {
   bool phoneMode = false;
   bool busy = false;
   String? error;
-
-  String normalizedPhone() {
-    var p = phone.text.replaceAll(RegExp(r'\D'), '');
-    if (p.startsWith('0')) p = p.substring(1);
-    if (!p.startsWith('90')) p = '90$p';
-    return '+$p';
-  }
 
   Future<void> loginEmail() async {
     if (email.text.trim().isEmpty || password.text.length < 6) {
@@ -196,57 +185,49 @@ class _LoginScreenState extends State<_LoginScreen> {
       setState(() => error = 'Geçerli telefon numarası gir.');
       return;
     }
-    Navigator.push(context, MaterialPageRoute(builder: (_) => _PhoneOtpScreen(phone: normalizedPhone())));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => _PhoneOtpScreen(phone: _normalizePhone(phone.text))));
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(26),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const ui.PageTitle('Tekrar hoş geldin.', 'E-posta veya telefon numaranla giriş yap.'),
-              const SizedBox(height: 24),
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(value: false, label: Text('E-posta'), icon: Icon(Icons.mail_outline)),
-                  ButtonSegment(value: true, label: Text('Telefon'), icon: Icon(Icons.phone_outlined)),
-                ],
-                selected: {phoneMode},
-                onSelectionChanged: busy ? null : (v) => setState(() { phoneMode = v.first; error = null; }),
-              ),
-              const SizedBox(height: 22),
-              if (!phoneMode) ...[
-                TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')),
-                const SizedBox(height: 12),
-                TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre')),
-              ] else
-                TextField(
-                  controller: phone,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Telefon numarası', prefixText: '+90 ', hintText: '5XX XXX XX XX'),
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(backgroundColor: Colors.transparent),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(26),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ui.PageTitle('Tekrar hoş geldin.', 'E-posta veya telefon numaranla giriş yap.'),
+                const SizedBox(height: 24),
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment(value: false, label: Text('E-posta'), icon: Icon(Icons.mail_outline)),
+                    ButtonSegment(value: true, label: Text('Telefon'), icon: Icon(Icons.phone_outlined)),
+                  ],
+                  selected: {phoneMode},
+                  onSelectionChanged: busy ? null : (v) => setState(() { phoneMode = v.first; error = null; }),
                 ),
-              if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))),
-              const Spacer(),
-              FilledButton(
-                onPressed: busy ? null : (phoneMode ? sendOtp : loginEmail),
-                child: Text(busy ? 'Lütfen bekle...' : (phoneMode ? 'Kodu gönder' : 'Giriş yap')),
-              ),
-            ],
+                const SizedBox(height: 22),
+                if (!phoneMode) ...[
+                  TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')),
+                  const SizedBox(height: 12),
+                  TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre')),
+                ] else
+                  TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Telefon numarası', prefixText: '+90 ', hintText: '5XX XXX XX XX')),
+                if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))),
+                const Spacer(),
+                FilledButton(onPressed: busy ? null : (phoneMode ? sendOtp : loginEmail), child: Text(busy ? 'Lütfen bekle...' : (phoneMode ? 'Kodu gönder' : 'Giriş yap'))),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 class _PhoneOtpScreen extends StatefulWidget {
-  const _PhoneOtpScreen({required this.phone});
+  const _PhoneOtpScreen({required this.phone, this.registering = false});
   final String phone;
+  final bool registering;
   @override
   State<_PhoneOtpScreen> createState() => _PhoneOtpScreenState();
 }
@@ -265,9 +246,13 @@ class _PhoneOtpScreenState extends State<_PhoneOtpScreen> {
     try {
       await OpenBackend.instance.verifyPhoneOtp(widget.phone, code.text);
       if (!mounted) return;
-      await _continueAfterAuth(context);
+      if (widget.registering) {
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const _ProfileScreen()), (_) => false);
+      } else {
+        await _continueAfterAuth(context);
+      }
     } catch (e) {
-      if (mounted) setState(() => error = 'Giriş yapılamadı: $e');
+      if (mounted) setState(() => error = 'Doğrulama yapılamadı: $e');
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -284,15 +269,10 @@ class _PhoneOtpScreenState extends State<_PhoneOtpScreen> {
               children: [
                 ui.PageTitle('Kodu gir.', '${widget.phone} için test doğrulama kodunu yaz.'),
                 const SizedBox(height: 26),
-                TextField(
-                  controller: code,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  decoration: const InputDecoration(labelText: 'Doğrulama kodu', helperText: 'Şimdilik: 123456'),
-                ),
+                TextField(controller: code, keyboardType: TextInputType.number, maxLength: 6, decoration: const InputDecoration(labelText: 'Doğrulama kodu', helperText: 'Şimdilik: 123456')),
                 if (error != null) Text(error!, style: const TextStyle(color: Colors.red)),
                 const Spacer(),
-                FilledButton(onPressed: busy ? null : verify, child: Text(busy ? 'Doğrulanıyor...' : 'Giriş yap')),
+                FilledButton(onPressed: busy ? null : verify, child: Text(busy ? 'Doğrulanıyor...' : (widget.registering ? 'Hesabı oluştur' : 'Giriş yap'))),
               ],
             ),
           ),
@@ -378,10 +358,12 @@ class _RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<_RegisterScreen> {
   final email = TextEditingController();
   final password = TextEditingController();
+  final phone = TextEditingController();
+  bool phoneMode = true;
   bool busy = false;
   String? error;
 
-  Future<void> register() async {
+  Future<void> registerEmail() async {
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.text.trim()) || password.text.length < 6) {
       setState(() => error = 'Geçerli e-posta ve en az 6 karakter şifre gir.');
       return;
@@ -402,6 +384,14 @@ class _RegisterScreenState extends State<_RegisterScreen> {
     }
   }
 
+  void registerPhone() {
+    if (phone.text.replaceAll(RegExp(r'\D'), '').length < 10) {
+      setState(() => error = 'Geçerli telefon numarası gir.');
+      return;
+    }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => _PhoneOtpScreen(phone: _normalizePhone(phone.text), registering: true)));
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(backgroundColor: Colors.transparent),
@@ -411,14 +401,30 @@ class _RegisterScreenState extends State<_RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const ui.PageTitle('Hesabını oluştur.', 'E-posta ve şifrenle daha sonra tekrar giriş yapabilirsin.'),
-                const SizedBox(height: 26),
-                TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')),
-                const SizedBox(height: 12),
-                TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre', helperText: 'En az 6 karakter')),
+                const ui.PageTitle('Hesabını oluştur.', 'Telefon numarası veya e-posta ile kayıt ol.'),
+                const SizedBox(height: 24),
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment(value: true, label: Text('Telefon'), icon: Icon(Icons.phone_outlined)),
+                    ButtonSegment(value: false, label: Text('E-posta'), icon: Icon(Icons.mail_outline)),
+                  ],
+                  selected: {phoneMode},
+                  onSelectionChanged: busy ? null : (v) => setState(() { phoneMode = v.first; error = null; }),
+                ),
+                const SizedBox(height: 22),
+                if (phoneMode)
+                  TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Telefon numarası', prefixText: '+90 ', hintText: '5XX XXX XX XX'))
+                else ...[
+                  TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')),
+                  const SizedBox(height: 12),
+                  TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre', helperText: 'En az 6 karakter')),
+                ],
                 if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))),
                 const Spacer(),
-                FilledButton(onPressed: busy ? null : register, child: Text(busy ? 'Hesap oluşturuluyor...' : 'Kayıt ol')),
+                FilledButton(
+                  onPressed: busy ? null : (phoneMode ? registerPhone : registerEmail),
+                  child: Text(busy ? 'Hesap oluşturuluyor...' : (phoneMode ? 'Kodu gönder' : 'Kayıt ol')),
+                ),
               ],
             ),
           ),
@@ -473,12 +479,7 @@ class _ProfileScreenState extends State<_ProfileScreen> {
                   height: 170,
                   width: double.infinity,
                   decoration: BoxDecoration(color: ui.OpenApp.soft, borderRadius: BorderRadius.circular(30)),
-                  child: const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [ui.AppSvg(ui.AppIcons.camera, size: 52), SizedBox(height: 10), Text('Fotoğraf ekle', style: TextStyle(fontWeight: FontWeight.w800))],
-                    ),
-                  ),
+                  child: const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [ui.AppSvg(ui.AppIcons.camera, size: 52), SizedBox(height: 10), Text('Fotoğraf ekle', style: TextStyle(fontWeight: FontWeight.w800))])),
                 ),
                 const SizedBox(height: 16),
                 TextField(controller: name, decoration: const InputDecoration(labelText: 'Adın')),
