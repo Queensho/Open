@@ -118,11 +118,61 @@ class OpenBackend {
 
   Future<String> acceptKey(String requestId) async {
     final me = _uid();
-    final request = await client.from('key_requests').select('sender_id,status').eq('id', requestId).eq('receiver_id', me).single();
-    if (request['status'] != 'pending') throw StateError('Anahtar beklemede değil');
-    await client.from('key_requests').update({'status': 'accepted', 'responded_at': DateTime.now().toUtc().toIso8601String()}).eq('id', requestId).eq('receiver_id', me);
-    final match = await client.from('matches').insert({'user_a': request['sender_id'], 'user_b': me, 'key_request_id': requestId}).select('id').single();
-    return match['id'] as String;
+    final request = await client
+        .from('key_requests')
+        .select('sender_id,status')
+        .eq('id', requestId)
+        .eq('receiver_id', me)
+        .single();
+
+    final senderId = request['sender_id'].toString();
+
+    final existing = await client
+        .from('matches')
+        .select('id')
+        .or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)')
+        .eq('active', true)
+        .maybeSingle();
+
+    if (request['status'] == 'pending') {
+      await client
+          .from('key_requests')
+          .update({
+            'status': 'accepted',
+            'responded_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', requestId)
+          .eq('receiver_id', me)
+          .eq('status', 'pending');
+    } else if (request['status'] != 'accepted') {
+      throw StateError('Anahtar kabul edilebilir durumda değil');
+    }
+
+    if (existing != null) {
+      return existing['id'] as String;
+    }
+
+    try {
+      final match = await client
+          .from('matches')
+          .insert({
+            'user_a': senderId,
+            'user_b': me,
+            'key_request_id': requestId,
+          })
+          .select('id')
+          .single();
+      return match['id'] as String;
+    } on PostgrestException catch (e) {
+      if (e.code != '23505') rethrow;
+      final match = await client
+          .from('matches')
+          .select('id')
+          .or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)')
+          .eq('active', true)
+          .single();
+      return match['id'] as String;
+    }
   }
 
   Future<List<Map<String, dynamic>>> activeMatches() async {
