@@ -10,133 +10,23 @@ class OpenBackend {
 
   Future<AuthResponse> registerEmail(String email, String password) => client.auth.signUp(email: email.trim(), password: password);
   Future<AuthResponse> loginEmail(String email, String password) => client.auth.signInWithPassword(email: email.trim(), password: password);
-
-  // Development-only mock phone auth. No real SMS is sent yet.
   Future<void> sendPhoneOtp(String phone) async {}
-
-  String _mockPhoneEmail(String phone) {
-    final digits = phone.replaceAll(RegExp(r'\D'), '');
-    return 'phone_$digits@mock.open.local';
-  }
-
-  String _mockPhonePassword(String phone) {
-    final digits = phone.replaceAll(RegExp(r'\D'), '');
-    return 'OpenMock!$digits#123456';
-  }
-
-  Future<AuthResponse> verifyPhoneOtp(String phone, String token) async {
-    if (token.trim() != '123456') throw const AuthException('Mock kod hatalı');
-    final email = _mockPhoneEmail(phone);
-    final password = _mockPhonePassword(phone);
-    try {
-      return await client.auth.signInWithPassword(email: email, password: password);
-    } on AuthException catch (e) {
-      final message = e.message.toLowerCase();
-      final isMissingAccount = message.contains('invalid login credentials') || message.contains('invalid credentials');
-      if (!isMissingAccount) rethrow;
-    }
-    final response = await client.functions.invoke('mock-phone-auth', body: {'phone': phone.trim(), 'token': token.trim()});
-    if (response.status < 200 || response.status >= 300) throw AuthException('Mock telefon hesabı oluşturulamadı: ${response.data}');
-    return client.auth.signInWithPassword(email: email, password: password);
-  }
-
-  Future<AuthResponse> startMockPhoneSession() => client.auth.signInAnonymously();
-
-  Future<bool> hasCompletedProfile() async {
-    final id = userId;
-    if (id == null) return false;
-    final row = await client.from('profiles').select('profile_complete').eq('id', id).maybeSingle();
-    return row != null && row['profile_complete'] == true;
-  }
-
-  Future<bool> hasProfile() async {
-    final id = userId;
-    if (id == null) return false;
-    final row = await client.from('profiles').select('id').eq('id', id).maybeSingle();
-    return row != null;
-  }
-
-  Future<void> signOut() => client.auth.signOut();
-
-  Future<void> saveProfile(String name, String city, String gender) async {
-    final cleanName = name.trim();
-    final cleanCity = city.trim();
-    if (cleanName.isEmpty || cleanCity.isEmpty) throw ArgumentError('Ad ve konum zorunlu');
-    final id = _uid();
-    await client.from('profiles').upsert({'id': id, 'display_name': cleanName, 'city': cleanCity, 'gender': gender});
-  }
-
-  Future<List<Map<String, dynamic>>> saveLockQuestions(List<String> questions) async {
-    final id = _uid();
-    final clean = questions.map((q) => q.trim()).toList();
-    if (clean.length != 3 || clean.any((q) => q.isEmpty)) throw ArgumentError('3 geçerli soru seçilmeli');
-    final rows = await client.from('profile_questions').upsert([
-      for (var i = 0; i < clean.length; i++) {'profile_id': id, 'question': clean[i], 'position': i + 1}
-    ], onConflict: 'profile_id,position').select('id,question,position').order('position');
-    await client.from('profiles').update({'profile_complete': true}).eq('id', id);
-    return List<Map<String, dynamic>>.from(rows);
-  }
-
-  Future<List<Map<String, dynamic>>> discover() async {
-    final id = _uid();
-    final data = await client.from('profiles').select('id,display_name,birth_date,bio,city,avatar_url,interests,is_online,is_verified,profile_questions(id,question,position)').eq('profile_complete', true).neq('id', id).limit(30);
-    return List<Map<String, dynamic>>.from(data);
-  }
-
-  Future<void> sendKey(String receiverId, String questionId, String answer) async {
-    final cleanAnswer = answer.trim();
-    if (cleanAnswer.isEmpty) throw ArgumentError('Cevap boş olamaz');
-    await client.from('key_requests').insert({'sender_id': _uid(), 'receiver_id': receiverId, 'question_id': questionId, 'answer': cleanAnswer});
-  }
-
-  Future<List<Map<String, dynamic>>> incomingKeys() async {
-    final data = await client.from('key_requests').select('id,sender_id,answer,status,created_at,profiles!key_requests_sender_id_fkey(display_name,avatar_url),profile_questions(question)').eq('receiver_id', _uid()).order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(data);
-  }
-
-  Future<void> rejectKey(String requestId) async {
-    final me = _uid();
-    await client.from('key_requests').update({'status': 'rejected', 'responded_at': DateTime.now().toUtc().toIso8601String()}).eq('id', requestId).eq('receiver_id', me).eq('status', 'pending');
-  }
-
-  Future<String> acceptKey(String requestId) async {
-    final me = _uid();
-    final request = await client.from('key_requests').select('sender_id,status').eq('id', requestId).eq('receiver_id', me).single();
-    final senderId = request['sender_id'].toString();
-    final existing = await client.from('matches').select('id').or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)').eq('active', true).maybeSingle();
-    if (request['status'] == 'pending') {
-      await client.from('key_requests').update({'status': 'accepted', 'responded_at': DateTime.now().toUtc().toIso8601String()}).eq('id', requestId).eq('receiver_id', me).eq('status', 'pending');
-    } else if (request['status'] != 'accepted') {
-      throw StateError('Anahtar kabul edilebilir durumda değil');
-    }
-    if (existing != null) return existing['id'] as String;
-    try {
-      final match = await client.from('matches').insert({'user_a': senderId, 'user_b': me, 'key_request_id': requestId}).select('id').single();
-      return match['id'] as String;
-    } on PostgrestException catch (e) {
-      if (e.code != '23505') rethrow;
-      final match = await client.from('matches').select('id').or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)').eq('active', true).single();
-      return match['id'] as String;
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> activeMatches() async {
-    final me = _uid();
-    final data = await client.from('matches').select('id,user_a,user_b,created_at').or('user_a.eq.$me,user_b.eq.$me').eq('active', true).order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(data);
-  }
-
-  Stream<List<Map<String, dynamic>>> messageStream(String matchId) => client.from('messages').stream(primaryKey: ['id']).eq('match_id', matchId).order('created_at').map((rows) => List<Map<String, dynamic>>.from(rows));
-
-  Future<void> sendMessage(String matchId, String text) async {
-    final body = text.trim();
-    if (body.isEmpty) throw ArgumentError('Mesaj boş olamaz');
-    await client.from('messages').insert({'match_id': matchId, 'sender_id': _uid(), 'body': body});
-  }
-
-  String _uid() {
-    final id = userId;
-    if (id == null) throw StateError('Supabase oturumu gerekli');
-    return id;
-  }
+  String _mockPhoneEmail(String phone) { final digits = phone.replaceAll(RegExp(r'\D'), ''); return 'phone_$digits@mock.open.local'; }
+  String _mockPhonePassword(String phone) { final digits = phone.replaceAll(RegExp(r'\D'), ''); return 'OpenMock!$digits#123456'; }
+  Future<AuthResponse> verifyPhoneOtp(String phone, String token) async {if(token.trim()!='123456')throw const AuthException('Mock kod hatalı');final email=_mockPhoneEmail(phone),password=_mockPhonePassword(phone);try{return await client.auth.signInWithPassword(email:email,password:password);}on AuthException catch(e){final m=e.message.toLowerCase();if(!m.contains('invalid login credentials')&&!m.contains('invalid credentials'))rethrow;}final response=await client.functions.invoke('mock-phone-auth',body:{'phone':phone.trim(),'token':token.trim()});if(response.status<200||response.status>=300)throw AuthException('Mock telefon hesabı oluşturulamadı: ${response.data}');return client.auth.signInWithPassword(email:email,password:password);}
+  Future<AuthResponse> startMockPhoneSession()=>client.auth.signInAnonymously();
+  Future<bool> hasCompletedProfile()async{final id=userId;if(id==null)return false;final row=await client.from('profiles').select('profile_complete').eq('id',id).maybeSingle();return row!=null&&row['profile_complete']==true;}
+  Future<bool> hasProfile()async{final id=userId;if(id==null)return false;final row=await client.from('profiles').select('id').eq('id',id).maybeSingle();return row!=null;}
+  Future<void> signOut()=>client.auth.signOut();
+  Future<void> saveProfile(String name,String city,String gender)async{final cleanName=name.trim(),cleanCity=city.trim();if(cleanName.isEmpty||cleanCity.isEmpty)throw ArgumentError('Ad ve konum zorunlu');final id=_uid();await client.from('profiles').upsert({'id':id,'display_name':cleanName,'city':cleanCity,'gender':gender});}
+  Future<List<Map<String,dynamic>>> saveLockQuestions(List<String> questions)async{final id=_uid();final clean=questions.map((q)=>q.trim()).toList();if(clean.length!=3||clean.any((q)=>q.isEmpty))throw ArgumentError('3 geçerli soru seçilmeli');final rows=await client.from('profile_questions').upsert([for(var i=0;i<clean.length;i++){'profile_id':id,'question':clean[i],'position':i+1}],onConflict:'profile_id,position').select('id,question,position').order('position');await client.from('profiles').update({'profile_complete':true}).eq('id',id);return List<Map<String,dynamic>>.from(rows);}
+  Future<List<Map<String,dynamic>>> discover()async{final id=_uid();final data=await client.from('profiles').select('id,display_name,birth_date,bio,city,avatar_url,gallery_urls,interests,is_online,is_verified,profile_questions(id,question,position)').eq('profile_complete',true).neq('id',id).limit(30);return List<Map<String,dynamic>>.from(data);}
+  Future<void> sendKey(String receiverId,String questionId,String answer)async{final cleanAnswer=answer.trim();if(cleanAnswer.isEmpty)throw ArgumentError('Cevap boş olamaz');await client.from('key_requests').insert({'sender_id':_uid(),'receiver_id':receiverId,'question_id':questionId,'answer':cleanAnswer});}
+  Future<List<Map<String,dynamic>>> incomingKeys()async{final data=await client.from('key_requests').select('id,sender_id,answer,status,created_at,profiles!key_requests_sender_id_fkey(display_name,avatar_url),profile_questions(question)').eq('receiver_id',_uid()).order('created_at',ascending:false);return List<Map<String,dynamic>>.from(data);}
+  Future<void> rejectKey(String requestId)async{final me=_uid();await client.from('key_requests').update({'status':'rejected','responded_at':DateTime.now().toUtc().toIso8601String()}).eq('id',requestId).eq('receiver_id',me).eq('status','pending');}
+  Future<String> acceptKey(String requestId)async{final me=_uid();final request=await client.from('key_requests').select('sender_id,status').eq('id',requestId).eq('receiver_id',me).single();final senderId=request['sender_id'].toString();final existing=await client.from('matches').select('id').or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)').eq('active',true).maybeSingle();if(request['status']=='pending'){await client.from('key_requests').update({'status':'accepted','responded_at':DateTime.now().toUtc().toIso8601String()}).eq('id',requestId).eq('receiver_id',me).eq('status','pending');}else if(request['status']!='accepted'){throw StateError('Anahtar kabul edilebilir durumda değil');}if(existing!=null)return existing['id'] as String;try{final match=await client.from('matches').insert({'user_a':senderId,'user_b':me,'key_request_id':requestId}).select('id').single();return match['id'] as String;}on PostgrestException catch(e){if(e.code!='23505')rethrow;final match=await client.from('matches').select('id').or('and(user_a.eq.$senderId,user_b.eq.$me),and(user_a.eq.$me,user_b.eq.$senderId)').eq('active',true).single();return match['id'] as String;}}
+  Future<List<Map<String,dynamic>>> activeMatches()async{final me=_uid();final data=await client.from('matches').select('id,user_a,user_b,created_at').or('user_a.eq.$me,user_b.eq.$me').eq('active',true).order('created_at',ascending:false);return List<Map<String,dynamic>>.from(data);}
+  Stream<List<Map<String,dynamic>>> messageStream(String matchId)=>client.from('messages').stream(primaryKey:['id']).eq('match_id',matchId).order('created_at').map((rows)=>List<Map<String,dynamic>>.from(rows));
+  Future<void> sendMessage(String matchId,String text)async{final body=text.trim();if(body.isEmpty)throw ArgumentError('Mesaj boş olamaz');await client.from('messages').insert({'match_id':matchId,'sender_id':_uid(),'body':body});}
+  String _uid(){final id=userId;if(id==null)throw StateError('Supabase oturumu gerekli');return id;}
 }
