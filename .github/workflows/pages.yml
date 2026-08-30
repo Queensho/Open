@@ -30,6 +30,34 @@ jobs:
       - name: Generate Flutter platforms
         run: flutter create . --platforms=web,android --project-name open_app --org com.openapp --no-pub
 
+      - name: Configure Android Firebase
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          app = Path('android/app/build.gradle.kts')
+          s = app.read_text()
+          s = s.replace('com.openapp.open_app', 'com.openapp.open')
+          if 'com.google.gms.google-services' not in s:
+              s = s.replace('id("dev.flutter.flutter-gradle-plugin")', 'id("dev.flutter.flutter-gradle-plugin")\n    id("com.google.gms.google-services")')
+          app.write_text(s)
+
+          settings = Path('android/settings.gradle.kts')
+          s = settings.read_text()
+          if 'com.google.gms.google-services' not in s:
+              marker = 'id("org.jetbrains.kotlin.android")'
+              i = s.find(marker)
+              if i >= 0:
+                  e = s.find('\n', i)
+                  s = s[:e+1] + '    id("com.google.gms.google-services") version "4.4.4" apply false\n' + s[e+1:]
+          settings.write_text(s)
+
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          s = manifest.read_text()
+          if 'android.permission.POST_NOTIFICATIONS' not in s:
+              s = s.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />')
+          manifest.write_text(s)
+          PY
+
       - name: Reset pub.dev credentials
         run: dart pub token remove https://pub.dev || true
 
@@ -40,6 +68,16 @@ jobs:
 
       - name: Analyze app
         run: flutter analyze lib
+
+      - name: Build Android test APK
+        run: flutter build apk --debug --target lib/bootstrap.dart
+
+      - name: Upload Android test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-android-test
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
 
       - name: Build web without service worker cache
         run: flutter build web --release --target lib/bootstrap.dart --base-href "/Open/" --pwa-strategy=none
