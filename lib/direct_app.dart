@@ -25,20 +25,116 @@ class _Welcome extends StatelessWidget {
   @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: Padding(padding: const EdgeInsets.all(28), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Spacer(), const ui.AppSvg(ui.AppIcons.splash, size: 90, card: true), const SizedBox(height: 28), const Text('Open', style: TextStyle(fontSize: 52, fontWeight: FontWeight.w900)), const SizedBox(height: 18), const Text('Kaydırma.\nÖnce kilidimi aç.', style: TextStyle(fontSize: 31, height: 1.08, fontWeight: FontWeight.w800)), const Spacer(), FilledButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _Onboarding())), child: const Text('Kayıt ol')), const SizedBox(height: 10), TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const _LoginScreen())), child: const Center(child: Text('Zaten hesabın var mı? Giriş yap', style: TextStyle(color: ui.OpenApp.ink, fontWeight: FontWeight.w800))))]))));
 }
 
-class _LoginScreen extends StatefulWidget { const _LoginScreen(); @override State<_LoginScreen> createState() => _LoginScreenState(); }
-class _LoginScreenState extends State<_LoginScreen> {
-  final email = TextEditingController(); final password = TextEditingController(); final phone = TextEditingController(); bool phoneMode = false; bool busy = false; String? error;
-  String normalizedPhone() { var p = phone.text.replaceAll(RegExp(r'\D'), ''); if (p.startsWith('0')) p = p.substring(1); if (!p.startsWith('90')) p = '90$p'; return '+$p'; }
-  Future<void> loginEmail() async { if (email.text.trim().isEmpty || password.text.length < 6) { setState(() => error = 'E-posta ve en az 6 karakter şifre gir.'); return; } setState(() { busy = true; error = null; }); try { await OpenBackend.instance.loginEmail(email.text, password.text); if (!mounted) return; await _continueAfterAuth(context); } catch (_) { if (mounted) setState(() => error = 'E-posta veya şifre hatalı.'); } finally { if (mounted) setState(() => busy = false); } }
-  Future<void> sendOtp() async { if (phone.text.replaceAll(RegExp(r'\D'), '').length < 10) { setState(() => error = 'Geçerli telefon numarası gir.'); return; } setState(() { busy = true; error = null; }); try { final p = normalizedPhone(); await OpenBackend.instance.sendPhoneOtp(p); if (!mounted) return; Navigator.push(context, MaterialPageRoute(builder: (_) => _PhoneOtpScreen(phone: p))); } catch (e) { if (mounted) setState(() => error = 'SMS gönderilemedi: $e'); } finally { if (mounted) setState(() => busy = false); } }
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.all(26), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const ui.PageTitle('Tekrar hoş geldin.', 'E-posta veya telefon numaranla giriş yap.'), const SizedBox(height: 24), SegmentedButton<bool>(segments: const [ButtonSegment(value: false, label: Text('E-posta'), icon: Icon(Icons.mail_outline)), ButtonSegment(value: true, label: Text('Telefon'), icon: Icon(Icons.phone_outlined))], selected: {phoneMode}, onSelectionChanged: busy ? null : (v) => setState(() { phoneMode = v.first; error = null; })), const SizedBox(height: 22), if (!phoneMode) ...[TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')), const SizedBox(height: 12), TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre'))] else TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Telefon numarası', prefixText: '+90 ', hintText: '5XX XXX XX XX')), if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))), const Spacer(), FilledButton(onPressed: busy ? null : (phoneMode ? sendOtp : loginEmail), child: Text(busy ? 'Lütfen bekle...' : (phoneMode ? 'SMS kodu gönder' : 'Giriş yap'))])))));
+class _LoginScreen extends StatefulWidget {
+  const _LoginScreen();
+  @override
+  State<_LoginScreen> createState() => _LoginScreenState();
 }
 
-class _PhoneOtpScreen extends StatefulWidget { const _PhoneOtpScreen({required this.phone}); final String phone; @override State<_PhoneOtpScreen> createState() => _PhoneOtpScreenState(); }
+class _LoginScreenState extends State<_LoginScreen> {
+  final email = TextEditingController();
+  final password = TextEditingController();
+  final phone = TextEditingController();
+  bool phoneMode = false;
+  bool busy = false;
+  String? error;
+
+  String normalizedPhone() {
+    var p = phone.text.replaceAll(RegExp(r'\D'), '');
+    if (p.startsWith('0')) p = p.substring(1);
+    if (!p.startsWith('90')) p = '90$p';
+    return '+$p';
+  }
+
+  Future<void> loginEmail() async {
+    if (email.text.trim().isEmpty || password.text.length < 6) {
+      setState(() => error = 'E-posta ve en az 6 karakter şifre gir.');
+      return;
+    }
+    setState(() { busy = true; error = null; });
+    try {
+      await OpenBackend.instance.loginEmail(email.text, password.text);
+      if (!mounted) return;
+      await _continueAfterAuth(context);
+    } catch (_) {
+      if (mounted) setState(() => error = 'E-posta veya şifre hatalı.');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  void sendOtp() {
+    if (phone.text.replaceAll(RegExp(r'\D'), '').length < 10) {
+      setState(() => error = 'Geçerli telefon numarası gir.');
+      return;
+    }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => _PhoneOtpScreen(phone: normalizedPhone())));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(backgroundColor: Colors.transparent),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(26),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const ui.PageTitle('Tekrar hoş geldin.', 'E-posta veya telefon numaranla giriş yap.'),
+              const SizedBox(height: 24),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('E-posta'), icon: Icon(Icons.mail_outline)),
+                  ButtonSegment(value: true, label: Text('Telefon'), icon: Icon(Icons.phone_outlined)),
+                ],
+                selected: {phoneMode},
+                onSelectionChanged: busy ? null : (v) => setState(() { phoneMode = v.first; error = null; }),
+              ),
+              const SizedBox(height: 22),
+              if (!phoneMode) ...[
+                TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-posta')),
+                const SizedBox(height: 12),
+                TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Şifre')),
+              ] else
+                TextField(controller: phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Telefon numarası', prefixText: '+90 ', hintText: '5XX XXX XX XX')),
+              if (error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(error!, style: const TextStyle(color: Colors.red))),
+              const Spacer(),
+              FilledButton(onPressed: busy ? null : (phoneMode ? sendOtp : loginEmail), child: Text(busy ? 'Lütfen bekle...' : (phoneMode ? 'Kodu gönder' : 'Giriş yap'))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhoneOtpScreen extends StatefulWidget {
+  const _PhoneOtpScreen({required this.phone});
+  final String phone;
+  @override State<_PhoneOtpScreen> createState() => _PhoneOtpScreenState();
+}
 class _PhoneOtpScreenState extends State<_PhoneOtpScreen> {
-  final code = TextEditingController(); bool busy = false; String? error;
-  Future<void> verify() async { if (code.text.trim().length != 6) { setState(() => error = '6 haneli SMS kodunu gir.'); return; } setState(() { busy = true; error = null; }); try { await OpenBackend.instance.verifyPhoneOtp(widget.phone, code.text); if (!mounted) return; await _continueAfterAuth(context); } catch (_) { if (mounted) setState(() => error = 'Kod hatalı veya süresi dolmuş.'); } finally { if (mounted) setState(() => busy = false); } }
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.all(26), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [ui.PageTitle('Kodu gir.', '${widget.phone} numarasına gelen 6 haneli kodu yaz.'), const SizedBox(height: 26), TextField(controller: code, keyboardType: TextInputType.number, maxLength: 6, decoration: const InputDecoration(labelText: 'SMS kodu')), if (error != null) Text(error!, style: const TextStyle(color: Colors.red)), const Spacer(), FilledButton(onPressed: busy ? null : verify, child: Text(busy ? 'Doğrulanıyor...' : 'Giriş yap'))]))));
+  final code = TextEditingController();
+  bool busy = false;
+  String? error;
+  Future<void> verify() async {
+    if (code.text.trim() != '123456') {
+      setState(() => error = 'Kod hatalı. Test kodu: 123456');
+      return;
+    }
+    setState(() { busy = true; error = null; });
+    try {
+      if (!OpenBackend.instance.isAuthenticated) await OpenBackend.instance.startMockPhoneSession();
+      if (!mounted) return;
+      await _continueAfterAuth(context);
+    } catch (_) {
+      if (mounted) setState(() => error = 'Giriş başlatılamadı.');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(backgroundColor: Colors.transparent), body: SafeArea(child: Padding(padding: const EdgeInsets.all(26), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [ui.PageTitle('Kodu gir.', '${widget.phone} için test doğrulama kodunu yaz.'), const SizedBox(height: 26), TextField(controller: code, keyboardType: TextInputType.number, maxLength: 6, decoration: const InputDecoration(labelText: 'Doğrulama kodu', helperText: 'Şimdilik: 123456')), if (error != null) Text(error!, style: const TextStyle(color: Colors.red)), const Spacer(), FilledButton(onPressed: busy ? null : verify, child: Text(busy ? 'Doğrulanıyor...' : 'Giriş yap'))]))));
 }
 
 class _Onboarding extends StatefulWidget { const _Onboarding(); @override State<_Onboarding> createState() => _OnboardingState(); }
