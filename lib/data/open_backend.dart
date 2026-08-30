@@ -64,6 +64,14 @@ class OpenBackend {
     return List<Map<String, dynamic>>.from(data);
   }
 
+  Future<void> rejectKey(String requestId) async {
+    final me = _uid();
+    await client.from('key_requests').update({
+      'status': 'rejected',
+      'responded_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', requestId).eq('receiver_id', me).eq('status', 'pending');
+  }
+
   Future<String> acceptKey(String requestId) async {
     final me = _uid();
     final request = await client
