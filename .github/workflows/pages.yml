@@ -34,6 +34,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
           app = Path('android/app/build.gradle.kts')
           s = app.read_text()
           s = s.replace('com.openapp.open_app', 'com.openapp.open')
@@ -56,6 +57,16 @@ jobs:
           if 'android.permission.POST_NOTIFICATIONS' not in s:
               s = s.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />')
           manifest.write_text(s)
+
+          old_activity = Path('android/app/src/main/kotlin/com/openapp/open_app/MainActivity.kt')
+          new_activity = Path('android/app/src/main/kotlin/com/openapp/open/MainActivity.kt')
+          if old_activity.exists():
+              activity = old_activity.read_text().replace('package com.openapp.open_app', 'package com.openapp.open')
+              new_activity.parent.mkdir(parents=True, exist_ok=True)
+              new_activity.write_text(activity)
+              old_activity.unlink()
+          elif new_activity.exists():
+              new_activity.write_text(new_activity.read_text().replace('package com.openapp.open_app', 'package com.openapp.open'))
           PY
 
       - name: Reset pub.dev credentials
