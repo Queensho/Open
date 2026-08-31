@@ -9,12 +9,14 @@ class PushNotifications {
   PushNotifications._();
   static final instance = PushNotifications._();
 
+  final _openedController=StreamController<Map<String,dynamic>>.broadcast();
+  Stream<Map<String,dynamic>> get opened=>_openedController.stream;
   StreamSubscription<String>? _refreshSubscription;
   StreamSubscription<RemoteMessage>? _tapSubscription;
   bool _started = false;
-  RemoteMessage? _pendingMessage;
+  Map<String,dynamic>? _pendingData;
 
-  RemoteMessage? takePendingMessage(){final m=_pendingMessage;_pendingMessage=null;return m;}
+  Map<String,dynamic>? takePendingData(){final m=_pendingData;_pendingData=null;return m;}
 
   Future<void> start({bool askPermission=false}) async {
     if (_started || kIsWeb) return;
@@ -25,9 +27,9 @@ class PushNotifications {
       if(askPermission){await messaging.requestPermission(alert:true,badge:true,sound:true);}
       await _saveToken(await messaging.getToken());
       _refreshSubscription = messaging.onTokenRefresh.listen(_saveToken);
-      _tapSubscription = FirebaseMessaging.onMessageOpenedApp.listen((m)=>_pendingMessage=m);
+      _tapSubscription = FirebaseMessaging.onMessageOpenedApp.listen((m)=>_openedController.add(Map<String,dynamic>.from(m.data)));
       final initial=await messaging.getInitialMessage();
-      if(initial!=null)_pendingMessage=initial;
+      if(initial!=null)_pendingData=Map<String,dynamic>.from(initial.data);
     } catch (_) {
       _started = false;
     }
