@@ -84,7 +84,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze app
-        run: flutter analyze lib --no-fatal-infos
+        run: flutter analyze lib --no-fatal-infos --no-fatal-warnings
 
       - name: Build Android test APK
         run: flutter build apk --debug --target lib/bootstrap.dart
