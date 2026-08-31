@@ -40,6 +40,10 @@ jobs:
           s = s.replace('com.openapp.open_app', 'com.openapp.open')
           if 'com.google.gms.google-services' not in s:
               s = s.replace('id("dev.flutter.flutter-gradle-plugin")', 'id("dev.flutter.flutter-gradle-plugin")\n    id("com.google.gms.google-services")')
+          if 'isCoreLibraryDesugaringEnabled = true' not in s:
+              s = s.replace('compileOptions {', 'compileOptions {\n        isCoreLibraryDesugaringEnabled = true')
+          if 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")' not in s:
+              s = s.replace('\nflutter {', '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")\n}\n\nflutter {')
           app.write_text(s)
 
           settings = Path('android/settings.gradle.kts')
@@ -56,6 +60,8 @@ jobs:
           s = manifest.read_text()
           if 'android.permission.POST_NOTIFICATIONS' not in s:
               s = s.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />')
+          if 'android.permission.ACCESS_FINE_LOCATION' not in s:
+              s = s.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />')
           manifest.write_text(s)
 
           old_activity = Path('android/app/src/main/kotlin/com/openapp/open_app/MainActivity.kt')
