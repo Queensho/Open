@@ -10,20 +10,37 @@ class PushNotifications {
   static final instance = PushNotifications._();
 
   StreamSubscription<String>? _refreshSubscription;
+  StreamSubscription<RemoteMessage>? _tapSubscription;
   bool _started = false;
+  RemoteMessage? _pendingMessage;
 
-  Future<void> start() async {
+  RemoteMessage? takePendingMessage(){final m=_pendingMessage;_pendingMessage=null;return m;}
+
+  Future<void> start({bool askPermission=false}) async {
     if (_started || kIsWeb) return;
     _started = true;
     try {
       await Firebase.initializeApp();
       final messaging = FirebaseMessaging.instance;
-      await messaging.requestPermission(alert: true, badge: true, sound: true);
+      if(askPermission){await messaging.requestPermission(alert:true,badge:true,sound:true);}
       await _saveToken(await messaging.getToken());
       _refreshSubscription = messaging.onTokenRefresh.listen(_saveToken);
+      _tapSubscription = FirebaseMessaging.onMessageOpenedApp.listen((m)=>_pendingMessage=m);
+      final initial=await messaging.getInitialMessage();
+      if(initial!=null)_pendingMessage=initial;
     } catch (_) {
       _started = false;
     }
+  }
+
+  Future<void> requestPermission() async {
+    if(kIsWeb)return;
+    try{
+      await Firebase.initializeApp();
+      final messaging=FirebaseMessaging.instance;
+      await messaging.requestPermission(alert:true,badge:true,sound:true);
+      await _saveToken(await messaging.getToken());
+    }catch(_){}
   }
 
   Future<void> _saveToken(String? token) async {
@@ -40,7 +57,9 @@ class PushNotifications {
 
   Future<void> stop() async {
     await _refreshSubscription?.cancel();
+    await _tapSubscription?.cancel();
     _refreshSubscription = null;
+    _tapSubscription = null;
     _started = false;
   }
 }
