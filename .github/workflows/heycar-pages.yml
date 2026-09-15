@@ -30,6 +30,9 @@ jobs:
       - name: Apply Cepqar frontend branding
         run: python3 tool/brand_frontend.py
 
+      - name: Apply owner hero animation
+        run: python3 tool/owner_hero_animation_patch.py
+
       - name: Generate web platform
         run: flutter create . --platforms=web --project-name heycar_app --org com.heycar --no-pub
 
