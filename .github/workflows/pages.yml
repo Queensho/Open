@@ -24,6 +24,9 @@ jobs:
       - name: Apply Cepqar frontend branding
         run: python3 tool/brand_frontend.py
 
+      - name: Apply owner hero animation
+        run: python3 tool/owner_hero_animation_patch.py
+
       - name: Apply Android back navigation
         run: python3 tool/back_navigation_patch.py
 
